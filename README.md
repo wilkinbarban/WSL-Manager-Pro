@@ -1,4 +1,4 @@
-﻿# WSL Manager Pro
+# WSL Manager Pro
 
 <div align="center">
   <img src="assets/icon.png" alt="WSL Manager Pro Logo" width="180" style="max-width: 36vw; border-radius: 20px; box-shadow: 0 10px 28px rgba(0,0,0,0.28);">
@@ -15,7 +15,7 @@
 
 ---
 
-> **Available in:** [English](README.md) · [Español](README_es.md) · [Português](README_br.md)
+> **Available in:** [English](README.md) � [Espa�ol](README_es.md) � [Portugu�s](README_br.md)
 
 ---
 
@@ -89,22 +89,22 @@ provisioning (user account, packages, `wsl.conf`), resource limits via
 
 ### One-Click Installation (PowerShell)
 
-#### Option A — You already have the repository cloned or downloaded
+#### Option A � You already have the repository cloned or downloaded
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; .\install.ps1
 ```
 
-#### Option A2 — Direct bootstrap without cloning (download + run install.ps1)
+#### Option A2 � Direct bootstrap without cloning (download + run install.ps1)
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/main/install.ps1 | iex
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install.ps1 | iex
 ```
 
-#### Option B — Secure remote install (clones repo to Desktop, then delegates to install.ps1)
+#### Option B � Secure remote install (clones repo to Desktop, then delegates to install.ps1)
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/main/install_secure.ps1 | iex
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install_secure.ps1 | iex
 ```
 
 `install_secure.ps1` downloads the repository to `%USERPROFILE%\Desktop\WSL-Manager-Pro`
@@ -135,71 +135,71 @@ python main.py
 
 ```
 WSL Manager Pro/
-├── main.py                     # Entry point: path, elevation, QApplication, MainWindow
-├── pyproject.toml              # Metadata, dependencies, ruff and pytest configuration
-├── requirements.txt            # Runtime dependencies
-├── distros.json                # Static distro catalogue (URLs, package managers, post-install)
-├── ROADMAP.md                  # Multi-phase development plan (150+ tasks)
-├── build.ps1                   # PyInstaller build trigger (single EXE)
-├── install.ps1                 # One-click environment installer
-├── wsl_manager_pro.spec        # PyInstaller spec file
-├── wsl_manager_pro.rc          # Windows resource file (icon embedding)
-│
-├── core/                       # Business logic
-│   ├── __init__.py
-│   ├── wsl_engine.py           # Facade over wsl.exe, PowerShell, post-install, .wslconfig
-│   ├── wsl_list_parser.py      # Pure parsers for wsl --list output (testable without WSL)
-│   ├── downloader.py           # Resumable HTTP downloads + checksum verification
-│   ├── catalog_loader.py       # Catalogue validation, loading, and remote merge
-│   └── constants.py            # Timeout, retry, chunk-size, and UI-limit constants
-│
-├── utils/                      # Cross-cutting services
-│   ├── __init__.py
-│   ├── config_manager.py       # Persistent JSON config (%APPDATA%\WSLManagerPro\config.json)
-│   ├── app_logging.py          # Rotating file logger
-│   ├── i18n.py                 # Runtime i18n (en/es/pt) with live switching
-│   ├── diagnostic_bundle.py    # ZIP diagnostic bundle generator
-│   └── worker_threads.py       # QThread workers: refresh, install, download, etc.
-│
-├── ui/                         # PySide6 graphical interface
-│   ├── __init__.py
-│   ├── main_window.py          # QMainWindow: tabs, toolbar, workers, logging
-│   ├── dialogs.py              # Modal dialogs + 5-page Install Wizard
-│   ├── icons.py                # Programmatic status icons (circles) for the Dashboard
-│   ├── theme.py                # Centralised UI colour constants
-│   └── tabs/                   # Extracted tab widgets (ROADMAP phase A)
-│       ├── __init__.py
-│       ├── dashboard_tab.py    # Distro status table with refresh and user probing
-│       ├── manage_tab.py       # Import/export and quick actions
-│       └── settings_tab.py     # Paths, startup options, WSL2 resource limits
-│
-├── resources/                  # Bundled assets
-│   ├── i18n/
-│   │   ├── en.json             # English translations (500+ keys)
-│   │   ├── es.json             # Spanish translations
-│   │   └── pt.json             # Portuguese (Brazilian) translations
-│   └── styles/
-│       └── dark.qss            # Dark Qt stylesheet (~250 lines)
-│
-├── assets/                     # Application icons
-│   ├── icon.ico
-│   └── icon.png
-│
-├── tests/                      # Unit tests (32 tests, no WSL required)
-│   ├── __init__.py
-│   ├── test_app_logging.py
-│   ├── test_catalog_loader.py
-│   ├── test_config_manager.py
-│   ├── test_diagnostic_bundle.py
-│   ├── test_dialogs.py
-│   ├── test_downloader.py
-│   ├── test_i18n.py
-│   ├── test_wsl_engine.py
-│   └── test_wsl_list_parser.py
-│
-└── docs/                       # Design documents
-    └── adrs/
-        └── 0001-qprocess-vs-subprocess.md
++-- main.py                     # Entry point: path, elevation, QApplication, MainWindow
++-- pyproject.toml              # Metadata, dependencies, ruff and pytest configuration
++-- requirements.txt            # Runtime dependencies
++-- distros.json                # Static distro catalogue (URLs, package managers, post-install)
++-- ROADMAP.md                  # Multi-phase development plan (150+ tasks)
++-- build.ps1                   # PyInstaller build trigger (single EXE)
++-- install.ps1                 # One-click environment installer
++-- wsl_manager_pro.spec        # PyInstaller spec file
++-- wsl_manager_pro.rc          # Windows resource file (icon embedding)
+�
++-- core/                       # Business logic
+�   +-- __init__.py
+�   +-- wsl_engine.py           # Facade over wsl.exe, PowerShell, post-install, .wslconfig
+�   +-- wsl_list_parser.py      # Pure parsers for wsl --list output (testable without WSL)
+�   +-- downloader.py           # Resumable HTTP downloads + checksum verification
+�   +-- catalog_loader.py       # Catalogue validation, loading, and remote merge
+�   +-- constants.py            # Timeout, retry, chunk-size, and UI-limit constants
+�
++-- utils/                      # Cross-cutting services
+�   +-- __init__.py
+�   +-- config_manager.py       # Persistent JSON config (%APPDATA%\WSLManagerPro\config.json)
+�   +-- app_logging.py          # Rotating file logger
+�   +-- i18n.py                 # Runtime i18n (en/es/pt) with live switching
+�   +-- diagnostic_bundle.py    # ZIP diagnostic bundle generator
+�   +-- worker_threads.py       # QThread workers: refresh, install, download, etc.
+�
++-- ui/                         # PySide6 graphical interface
+�   +-- __init__.py
+�   +-- main_window.py          # QMainWindow: tabs, toolbar, workers, logging
+�   +-- dialogs.py              # Modal dialogs + 5-page Install Wizard
+�   +-- icons.py                # Programmatic status icons (circles) for the Dashboard
+�   +-- theme.py                # Centralised UI colour constants
+�   +-- tabs/                   # Extracted tab widgets (ROADMAP phase A)
+�       +-- __init__.py
+�       +-- dashboard_tab.py    # Distro status table with refresh and user probing
+�       +-- manage_tab.py       # Import/export and quick actions
+�       +-- settings_tab.py     # Paths, startup options, WSL2 resource limits
+�
++-- resources/                  # Bundled assets
+�   +-- i18n/
+�   �   +-- en.json             # English translations (500+ keys)
+�   �   +-- es.json             # Spanish translations
+�   �   +-- pt.json             # Portuguese (Brazilian) translations
+�   +-- styles/
+�       +-- dark.qss            # Dark Qt stylesheet (~250 lines)
+�
++-- assets/                     # Application icons
+�   +-- icon.ico
+�   +-- icon.png
+�
++-- tests/                      # Unit tests (32 tests, no WSL required)
+�   +-- __init__.py
+�   +-- test_app_logging.py
+�   +-- test_catalog_loader.py
+�   +-- test_config_manager.py
+�   +-- test_diagnostic_bundle.py
+�   +-- test_dialogs.py
+�   +-- test_downloader.py
+�   +-- test_i18n.py
+�   +-- test_wsl_engine.py
+�   +-- test_wsl_list_parser.py
+�
++-- docs/                       # Design documents
+    +-- adrs/
+        +-- 0001-qprocess-vs-subprocess.md
 ```
 
 ---

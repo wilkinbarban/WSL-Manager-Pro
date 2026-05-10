@@ -86,13 +86,13 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; .\install.ps1
 #### Opción A2 — Bootstrap directo sin clonar (descarga + ejecuta install.ps1)
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/main/install.ps1 | iex
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install.ps1 | iex
 ```
 
 #### Opción B — Instalación remota segura (clona el repo en el Escritorio, luego delega en install.ps1)
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/main/install_secure.ps1 | iex
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install_secure.ps1 | iex
 ```
 
 `install_secure.ps1` descarga el repositorio en `%USERPROFILE%\Desktop\WSL-Manager-Pro`
