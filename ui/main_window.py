@@ -33,6 +33,7 @@ import shlex
 import shutil
 import subprocess
 import tempfile
+import time
 import webbrowser
 from datetime import datetime
 from pathlib import Path
@@ -2546,8 +2547,34 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event) -> None:
         self._refresh_timer.stop()
+        for _alias, proc in list(self._shell_procs.items()):
+            self._terminate_tracked_process(proc)
+        self._shell_procs.clear()
+        for _alias, proc in list(self._external_install_procs.items()):
+            self._terminate_tracked_process(proc)
+        self._external_install_procs.clear()
+
         for worker in list(self._active_workers):
+            cancel = getattr(worker, "cancel", None)
+            if callable(cancel):
+                try:
+                    cancel()
+                except Exception:
+                    pass
             if worker.isRunning():
                 worker.requestInterruption()
-                worker.wait(2000)
+
+        deadline = time.monotonic() + 8.0
+        for worker in list(self._active_workers):
+            if worker.isRunning():
+                remaining_ms = max(100, int((deadline - time.monotonic()) * 1000))
+                worker.wait(remaining_ms)
+        for worker in list(self._active_workers):
+            if worker.isRunning():
+                self._log(
+                    t("[WARN] Forcing shutdown of busy background worker '{name}'.", name=worker.__class__.__name__),
+                    color="#FFC107",
+                )
+                worker.terminate()
+                worker.wait(500)
         event.accept()
