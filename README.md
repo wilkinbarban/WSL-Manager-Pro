@@ -1,4 +1,4 @@
-# WSL Manager Pro
+﻿# WSL Manager Pro
 
 <div align="center">
   <img src="assets/icon.png" alt="WSL Manager Pro Logo" width="180" style="max-width: 36vw; border-radius: 20px; box-shadow: 0 10px 28px rgba(0,0,0,0.28);">
@@ -89,27 +89,31 @@ provisioning (user account, packages, `wsl.conf`), resource limits via
 
 ### One-Click Installation (PowerShell)
 
-#### Option A · You already have the repository cloned or downloaded
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; .\install.ps1
-```
-
-#### Option A2 · Direct bootstrap without cloning (download + run install.ps1)
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install.ps1 | iex
-```
-
-#### Option B · Secure remote install (clones repo to Desktop, then delegates to install.ps1)
-
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install_secure.ps1 | iex
 ```
 
-`install_secure.ps1` downloads the repository to `%USERPROFILE%\Desktop\WSL-Manager-Pro`
-by default, verifies critical files, and delegates to `install.ps1` locally for
-the fully automated environment setup.
+> **What this command does — step by step:**
+>
+> 1. **Downloads `install_secure.ps1`** — A lightweight bootstrap script (~6 KB) that
+>    is fetched directly from the repository's `master` branch via GitHub's raw
+>    content delivery.
+> 2. **Clones the full repository** — The bootstrap script downloads the entire
+>    WSL Manager Pro source tree into `%USERPROFILE%\Desktop\WSL-Manager-Pro` using
+>    `git clone --depth 1` (shallow clone — fast, no full history).
+> 3. **Verifies critical files** — Checks that `install.ps1` and `distros.json`
+>    are present and intact before proceeding. If anything is missing, the script
+>    halts with a clear error message.
+> 4. **Delegates to `install.ps1`** — The verified local copy of the full
+>    environment installer takes over and runs the complete setup pipeline:
+>    enables WSL Windows features, installs Python 3.12 + Node.js LTS via winget,
+>    creates a `.venv` virtual environment, and installs all project dependencies.
+> 5. **Ready to launch** — When the process completes, the application is fully
+>    configured and can be started with `python main.py` from the cloned directory.
+>
+> **Requirements:** Administrator privileges (the script will auto-elevate via
+> UAC prompt), Git must be installed and on PATH, and `winget` must be available
+> (bundled with App Installer on Windows 10/11).
 
 ### Manual Installation (classic alternative)
 

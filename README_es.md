@@ -77,27 +77,33 @@ límites de recursos mediante `.wslconfig` y utilidades de mantenimiento.
 
 ### Instalación con un solo comando (PowerShell)
 
-#### Opción A — Ya tienes el repositorio clonado o descargado
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; .\install.ps1
-```
-
-#### Opción A2 — Bootstrap directo sin clonar (descarga + ejecuta install.ps1)
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install.ps1 | iex
-```
-
-#### Opción B — Instalación remota segura (clona el repo en el Escritorio, luego delega en install.ps1)
-
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install_secure.ps1 | iex
 ```
 
-`install_secure.ps1` descarga el repositorio en `%USERPROFILE%\Desktop\WSL-Manager-Pro`
-por defecto, verifica los archivos críticos y delega en `install.ps1` localmente para
-la configuración completamente automatizada del entorno.
+> **Qué hace este comando — paso a paso:**
+>
+> 1. **Descarga `install_secure.ps1`** — Un script de arranque ligero (~6 KB) que
+>    se obtiene directamente desde la rama `master` del repositorio a través del
+>    servicio de contenido raw de GitHub.
+> 2. **Clona el repositorio completo** — El script de arranque descarga todo el
+>    código fuente de WSL Manager Pro en `%USERPROFILE%\Desktop\WSL-Manager-Pro`
+>    usando `git clone --depth 1` (clon superficial — rápido, sin historial completo).
+> 3. **Verifica archivos críticos** — Comprueba que `install.ps1` y `distros.json`
+>    estén presentes e intactos antes de continuar. Si algo falta, el script se
+>    detiene con un mensaje de error claro.
+> 4. **Delega en `install.ps1`** — La copia local verificada del instalador
+>    completo de entorno toma el control y ejecuta la configuración completa:
+>    habilita características WSL de Windows, instala Python 3.12 + Node.js LTS
+>    mediante winget, crea un entorno virtual `.venv` e instala todas las
+>    dependencias del proyecto.
+> 5. **Listo para ejecutar** — Cuando el proceso termina, la aplicación está
+>    completamente configurada y puede iniciarse con `python main.py` desde el
+>    directorio clonado.
+>
+> **Requisitos:** Privilegios de Administrador (el script se auto-eleva mediante
+> aviso UAC), Git debe estar instalado y en PATH, y `winget` debe estar disponible
+> (incluido con App Installer en Windows 10/11).
 
 ### Instalación Manual (alternativa clásica)
 
