@@ -5,6 +5,8 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-green.svg)](https://pypi.org/project/PySide6/)
 
+> 📖 También disponible en: [English](README.md) · [Português](README_br.md)
+
 Aplicación de escritorio para **Windows** que centraliza la gestión del
 **Subsistema de Windows para Linux (WSL)**: listar distribuciones, instalar
 desde el catálogo en línea o desde un rootfs descargado, importar/exportar,
