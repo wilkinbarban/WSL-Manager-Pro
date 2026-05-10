@@ -75,38 +75,47 @@ límites de recursos mediante `.wslconfig` y utilidades de mantenimiento.
 
 ## Inicio Rápido
 
-### Instalador de Un Clic (Recomendado)
+### Instalación con un solo comando (PowerShell)
+
+#### Opción A — Ya tienes el repositorio clonado o descargado
 
 ```powershell
-.\install.ps1
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; .\install.ps1
 ```
 
-Este script PowerShell completamente automatizado aprovisiona todas las
-dependencias: habilita características WSL, instala Python 3.12 y Node.js LTS
-mediante winget, crea un `.venv` e instala todas las dependencias del proyecto.
-
-### Instalación Manual
+#### Opción A2 — Bootstrap directo sin clonar (descarga + ejecuta install.ps1)
 
 ```powershell
-# 1. Crear y activar un entorno virtual
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/main/install.ps1 | iex
+```
+
+#### Opción B — Instalación remota segura (clona el repo en el Escritorio, luego delega en install.ps1)
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/main/install_secure.ps1 | iex
+```
+
+`install_secure.ps1` descarga el repositorio en `%USERPROFILE%\Desktop\WSL-Manager-Pro`
+por defecto, verifica los archivos críticos y delega en `install.ps1` localmente para
+la configuración completamente automatizada del entorno.
+
+### Instalación Manual (alternativa clásica)
+
+```powershell
+# 1. Clonar o descargar el repositorio
+git clone https://github.com/wilkinbarban/WSL-Manager-Pro.git
+cd WSL-Manager-Pro
+
+# 2. Crear y activar un entorno virtual
 python -m venv .venv
 .\.venv\Scripts\activate
 
-# 2. Instalar dependencias de ejecución
+# 3. Instalar dependencias de ejecución
 pip install -r requirements.txt
 
-# 3. Ejecutar la aplicación
+# 4. Ejecutar la aplicación
 python main.py
 ```
-
-### Instalación Editable (para Contribuidores)
-
-```powershell
-pip install -e ".[dev]"
-```
-
-Instala el proyecto en modo editable con herramientas de desarrollo (pytest,
-ruff, pytest-qt).
 
 ---
 

@@ -1,4 +1,4 @@
-# WSL Manager Pro
+﻿# WSL Manager Pro
 
 [![CI](https://github.com/wilkinbarban/WSL-Manager-Pro/actions/workflows/ci.yml/badge.svg)](https://github.com/wilkinbarban/WSL-Manager-Pro/actions/workflows/ci.yml)
 [![Licença: GPL v3](https://img.shields.io/badge/Licença-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
@@ -75,38 +75,47 @@ limites de recursos via `.wslconfig` e utilitários de manutenção.
 
 ## Início Rápido
 
-### Instalador de Um Clique (Recomendado)
+### Instalação com um único comando (PowerShell)
+
+#### Opção A — Você já tem o repositório clonado ou baixado
 
 ```powershell
-.\install.ps1
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; .\install.ps1
 ```
 
-Este script PowerShell totalmente automatizado provisiona todas as
-dependências: habilita recursos WSL, instala Python 3.12 e Node.js LTS via
-winget, cria um `.venv` e instala todas as dependências do projeto.
-
-### Instalação Manual
+#### Opção A2 — Bootstrap direto sem clonar (baixa + executa install.ps1)
 
 ```powershell
-# 1. Criar e ativar um ambiente virtual
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/main/install.ps1 | iex
+```
+
+#### Opção B — Instalação remota segura (clona o repo na Área de Trabalho, depois delega ao install.ps1)
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/main/install_secure.ps1 | iex
+```
+
+O `install_secure.ps1` baixa o repositório em `%USERPROFILE%\Desktop\WSL-Manager-Pro`
+por padrão, verifica os arquivos críticos e delega ao `install.ps1` localmente para
+a configuração totalmente automatizada do ambiente.
+
+### Instalação Manual (alternativa clássica)
+
+```powershell
+# 1. Clonar ou baixar o repositório
+git clone https://github.com/wilkinbarban/WSL-Manager-Pro.git
+cd WSL-Manager-Pro
+
+# 2. Criar e ativar um ambiente virtual
 python -m venv .venv
 .\.venv\Scripts\activate
 
-# 2. Instalar dependências de execução
+# 3. Instalar dependências de execução
 pip install -r requirements.txt
 
-# 3. Executar o aplicativo
+# 4. Executar o aplicativo
 python main.py
 ```
-
-### Instalação Editável (para Contribuidores)
-
-```powershell
-pip install -e ".[dev]"
-```
-
-Instala o projeto em modo editável com ferramentas de desenvolvimento
-(pytest, ruff, pytest-qt).
 
 ---
 

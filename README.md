@@ -87,38 +87,47 @@ provisioning (user account, packages, `wsl.conf`), resource limits via
 
 ## Quick Start
 
-### One-Click Installer (Recommended)
+### One-Click Installation (PowerShell)
+
+#### Option A — You already have the repository cloned or downloaded
 
 ```powershell
-.\install.ps1
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; .\install.ps1
 ```
 
-This fully automated PowerShell script provisions all dependencies: enables
-WSL features, installs Python 3.12 and Node.js LTS via winget, creates a
-`.venv`, and installs all project dependencies.
-
-### Manual Installation
+#### Option A2 — Direct bootstrap without cloning (download + run install.ps1)
 
 ```powershell
-# 1. Create and activate a virtual environment
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/main/install.ps1 | iex
+```
+
+#### Option B — Secure remote install (clones repo to Desktop, then delegates to install.ps1)
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/main/install_secure.ps1 | iex
+```
+
+`install_secure.ps1` downloads the repository to `%USERPROFILE%\Desktop\WSL-Manager-Pro`
+by default, verifies critical files, and delegates to `install.ps1` locally for
+the fully automated environment setup.
+
+### Manual Installation (classic alternative)
+
+```powershell
+# 1. Clone or download the repository
+git clone https://github.com/wilkinbarban/WSL-Manager-Pro.git
+cd WSL-Manager-Pro
+
+# 2. Create and activate a virtual environment
 python -m venv .venv
 .\.venv\Scripts\activate
 
-# 2. Install runtime dependencies
+# 3. Install runtime dependencies
 pip install -r requirements.txt
 
-# 3. Run the application
+# 4. Run the application
 python main.py
 ```
-
-### Editable Install (for Contributors)
-
-```powershell
-pip install -e ".[dev]"
-```
-
-Installs the project in editable mode with development tools (pytest, ruff,
-pytest-qt).
 
 ---
 
