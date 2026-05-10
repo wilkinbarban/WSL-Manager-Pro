@@ -1,0 +1,5 @@
+#include <windows.h>
+
+// Windows resource script for packaging.
+// Reuses the exact same icon configured by the application at runtime.
+IDI_APP_ICON ICON "assets\\icon.ico"

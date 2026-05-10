@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wsl-manager-pro"
+version = "1.0.0"
+description = "Desktop manager for Windows Subsystem for Linux (WSL)"
+readme = "REDME.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.10"
+authors = [
+    {name = "WSL Manager Pro Contributors"}
+]
+keywords = ["wsl", "windows-subsystem-linux", "distro", "manager", "linux", "desktop"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Win32 (MS Windows)",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: Microsoft :: Windows :: Windows 10",
+    "Operating System :: Microsoft :: Windows :: Windows 11",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "PySide6>=6.6.0",
+    "requests>=2.31.0",
+    "zstandard>=0.22.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/username/wsl-manager-pro"
+Repository = "https://github.com/username/wsl-manager-pro"
+Documentation = "https://github.com/username/wsl-manager-pro/blob/main/REDME.md"
+"Issue Tracker" = "https://github.com/username/wsl-manager-pro/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+    "pytest-qt>=4.4",
+]
+
+[project.scripts]
+wsl-manager-pro = "main:main"
+
+[tool.setuptools]
+py-modules = ["main"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["core*", "utils*", "ui*"]
+exclude = ["tests*"]
+
+# --- Ruff (B2): ``ruff check core utils tests`` only. ``ui/`` excluded until
+#     remaining style issues are triaged post–phase-A refactor (ROADMAP).
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+extend-exclude = ["ui"]
+src = ["core", "utils", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["core", "utils", "ui"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"

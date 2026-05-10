@@ -1,0 +1,32 @@
+# ROADMAP B5: lint + tests on push/PR (no WSL required).
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install project + dev tools
+        run: pip install -e ".[dev]"
+
+      - name: Ruff (core, utils, tests)
+        run: ruff check core utils tests
+
+      - name: Pytest
+        run: pytest
