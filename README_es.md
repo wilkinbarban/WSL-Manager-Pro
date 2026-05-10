@@ -98,8 +98,8 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://r
 >    mediante winget, crea un entorno virtual `.venv` e instala todas las
 >    dependencias del proyecto.
 > 5. **Listo para ejecutar** — Cuando el proceso termina, la aplicación está
->    completamente configurada y puede iniciarse con `python main.py` desde el
->    directorio clonado.
+>    completamente configurada y puede iniciarse con `.\.venv\Scripts\python.exe .\main.py`
+>    desde el directorio clonado.
 >
 > **Requisitos:** Privilegios de Administrador (el script se auto-eleva mediante
 > aviso UAC), Git debe estar instalado y en PATH, y `winget` debe estar disponible

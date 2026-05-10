@@ -10,7 +10,7 @@
     This script is designed to be invoked remotely via::
 
         Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force;
-        irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/main/install_secure.ps1 | iex
+        irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install_secure.ps1 | iex
 
     It can also be run locally after downloading.
 
@@ -47,6 +47,12 @@ function Write-Banner {
 function Write-Step { param([string]$M) Write-Host "[STEP] $M" -ForegroundColor Yellow }
 function Write-Ok   { param([string]$M) Write-Host "[OK]   $M" -ForegroundColor Green }
 function Write-Err  { param([string]$M) Write-Host "[ERR]  $M" -ForegroundColor Red; throw $M }
+
+function Test-IsAdministrator {
+    $id = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object Security.Principal.WindowsPrincipal($id)
+    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
 
 # ===========================================================================
 # Prerequisites check
@@ -131,10 +137,26 @@ Write-Host ""
 
 Push-Location $InstallDir
 try {
-    & .\install.ps1
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host ""
-        Write-Err "install.ps1 returned exit code $LASTEXITCODE. Please review the output above."
+    if (Test-IsAdministrator) {
+        & .\install.ps1
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host ""
+            Write-Err "install.ps1 returned exit code $LASTEXITCODE. Please review the output above."
+        }
+    } else {
+        Write-Step "Requesting elevation and waiting for install.ps1 to complete..."
+        $proc = Start-Process -FilePath "powershell.exe" -Verb RunAs -PassThru -Wait -ArgumentList @(
+            "-NoProfile",
+            "-ExecutionPolicy", "Bypass",
+            "-File", "`"$installScript`""
+        )
+        if ($null -eq $proc) {
+            Write-Err "Could not launch elevated install.ps1 process."
+        }
+        if ($proc.ExitCode -ne 0) {
+            Write-Host ""
+            Write-Err "Elevated install.ps1 returned exit code $($proc.ExitCode). Please review the elevated console output."
+        }
     }
 } finally {
     Pop-Location

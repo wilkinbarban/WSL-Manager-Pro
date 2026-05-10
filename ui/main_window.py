@@ -175,6 +175,7 @@ class MainWindow(QMainWindow):
         self._static_distros_cfg = self._load_distros_catalog()
         self._distros_cfg: dict = {}
         self._active_workers: list = []   # keep references so GC doesn't kill them
+        self._worker_labels: dict[int, str] = {}
         self._external_install_procs: dict[str, subprocess.Popen] = {}
         self._shell_procs: dict[str, subprocess.Popen] = {}
         self._fallback_user_distros: set[str] = set()
@@ -496,9 +497,7 @@ class MainWindow(QMainWindow):
         worker = RefreshWorker(engine, parent=self)
         worker.distros_updated.connect(self._on_distros_updated)
         worker.error_occurred.connect(lambda e: self._log(e, color="#F44336"))
-        worker.finished.connect(lambda: self._active_workers.remove(worker))
-        self._active_workers.append(worker)
-        worker.start()
+        self._track_worker(worker, "refresh distros")
 
     def _on_distros_updated(self, distros: list) -> None:
         self._table.setRowCount(0)
@@ -685,9 +684,7 @@ class MainWindow(QMainWindow):
         worker = UserStatusProbeWorker(engine, distro_names, stop_after_probe=stop_after_probe, parent=self)
         worker.user_status_updated.connect(self._on_user_status_updated)
         worker.error_occurred.connect(lambda e: self._log(e, color="#F44336"))
-        worker.finished.connect(lambda: self._active_workers.remove(worker))
-        self._active_workers.append(worker)
-        worker.start()
+        self._track_worker(worker, "probe user status")
 
     def _rescan_user_status(self) -> None:
         names: list[str] = []
@@ -809,6 +806,38 @@ class MainWindow(QMainWindow):
         if not label or self._active_operation == label:
             self._active_operation = None
             self._set_stage(t("Ready"))
+
+    def _worker_label(self, worker) -> str:
+        return self._worker_labels.get(id(worker), "unspecified")
+
+    def _track_worker(self, worker, label: str) -> None:
+        self._worker_labels[id(worker)] = label
+        worker.started.connect(
+            lambda: self._log(
+                t(
+                    "[DEBUG] Worker started: {name} ({label})",
+                    name=worker.__class__.__name__,
+                    label=label,
+                ),
+                color=COLOR_MUTED,
+            )
+        )
+        worker.finished.connect(lambda: self._untrack_worker(worker))
+        self._active_workers.append(worker)
+        worker.start()
+
+    def _untrack_worker(self, worker) -> None:
+        label = self._worker_labels.pop(id(worker), "unspecified")
+        if worker in self._active_workers:
+            self._active_workers.remove(worker)
+        self._log(
+            t(
+                "[DEBUG] Worker finished: {name} ({label})",
+                name=worker.__class__.__name__,
+                label=label,
+            ),
+            color=COLOR_MUTED,
+        )
 
     def _maybe_check_for_updates(self) -> None:
         if not self._config_mgr.config.check_for_updates:
@@ -1156,9 +1185,7 @@ class MainWindow(QMainWindow):
         worker.finished_ok.connect(lambda: self._log_t("Export complete: {path}", path=path))
         worker.error_occurred.connect(lambda e: self._log(e, color=COLOR_ERROR))
         worker.finished.connect(lambda: self._end_operation("export"))
-        worker.finished.connect(lambda: self._active_workers.remove(worker))
-        self._active_workers.append(worker)
-        worker.start()
+        self._track_worker(worker, "export distro")
 
     def _do_manual_import(self) -> None:
         if not self._begin_operation("manual import"):
@@ -1179,9 +1206,7 @@ class MainWindow(QMainWindow):
         worker.finished_ok.connect(lambda: (self._log_t("Import of '{name}' done.", name=name), self._refresh_distros()))
         worker.error_occurred.connect(lambda e: self._log(e, color=COLOR_ERROR))
         worker.finished.connect(lambda: self._end_operation("manual import"))
-        worker.finished.connect(lambda: self._active_workers.remove(worker))
-        self._active_workers.append(worker)
-        worker.start()
+        self._track_worker(worker, "manual import")
 
     def _wake_distro(self, name: str) -> None:
         self._open_shell(name, root=False)
@@ -1266,9 +1291,7 @@ class MainWindow(QMainWindow):
         worker.log_message.connect(self._log)
         worker.error_occurred.connect(lambda e: self._log(e, color=COLOR_ERROR))
         worker.finished.connect(lambda: self._end_operation("winget install"))
-        worker.finished.connect(lambda: self._active_workers.remove(worker))
-        self._active_workers.append(worker)
-        worker.start()
+        self._track_worker(worker, "winget install")
 
     def _cached_shell_user(self, name: str) -> str:
         installed = self._config_mgr.find_installed(name)
@@ -1337,9 +1360,7 @@ class MainWindow(QMainWindow):
         worker.error_occurred.connect(lambda e: self._log(e, color="#F44336"))
         worker.finished_ok.connect(lambda: self._log_t("Full system update finished for '{name}'.", name=name))
         worker.finished.connect(lambda: self._end_operation("full system update"))
-        worker.finished.connect(lambda: self._active_workers.remove(worker))
-        self._active_workers.append(worker)
-        worker.start()
+        self._track_worker(worker, "full system update")
 
     def _do_repair_oracle_existing(self, name: str = "") -> None:
         if not name:
@@ -1441,9 +1462,7 @@ class MainWindow(QMainWindow):
                 self._refresh_distros()
 
         worker.finished.connect(_on_done)
-        worker.finished.connect(lambda: self._active_workers.remove(worker))
-        self._active_workers.append(worker)
-        worker.start()
+        self._track_worker(worker, "repair oracle existing")
 
     def _do_repair_suse_existing(self, name: str = "") -> None:
         if not name:
@@ -1546,9 +1565,7 @@ class MainWindow(QMainWindow):
                 self._refresh_distros()
 
         worker.finished.connect(_on_done)
-        worker.finished.connect(lambda: self._active_workers.remove(worker))
-        self._active_workers.append(worker)
-        worker.start()
+        self._track_worker(worker, "repair suse existing")
 
     def _update_repair_buttons_visibility(self) -> None:
         selected = (self._action_combo.currentText() or "").strip().lower()
@@ -1634,9 +1651,7 @@ class MainWindow(QMainWindow):
             self._refresh_distros(),
         ))
         worker.finished.connect(lambda: self._end_operation("install"))
-        worker.finished.connect(lambda: self._active_workers.remove(worker))
-        self._active_workers.append(worker)
-        worker.start()
+        self._track_worker(worker, "install pipeline")
 
     def _start_online_install_in_external_powershell(self, distro_cfg: dict, wizard) -> None:
         online_name = str(distro_cfg.get("online_name", "")).strip()
@@ -2202,9 +2217,7 @@ class MainWindow(QMainWindow):
             )
         )
         worker.finished.connect(lambda: self._end_operation(".wslconfig write"))
-        worker.finished.connect(lambda: self._active_workers.remove(worker))
-        self._active_workers.append(worker)
-        worker.start()
+        self._track_worker(worker, ".wslconfig write")
 
     # =========================================================================
     # Log console helpers
@@ -2555,6 +2568,15 @@ class MainWindow(QMainWindow):
         self._external_install_procs.clear()
 
         for worker in list(self._active_workers):
+            self._log(
+                t(
+                    "[DEBUG] Close snapshot: {name} ({label}) running={running}",
+                    name=worker.__class__.__name__,
+                    label=self._worker_label(worker),
+                    running=str(worker.isRunning()).lower(),
+                ),
+                color=COLOR_MUTED,
+            )
             cancel = getattr(worker, "cancel", None)
             if callable(cancel):
                 try:
@@ -2572,7 +2594,11 @@ class MainWindow(QMainWindow):
         for worker in list(self._active_workers):
             if worker.isRunning():
                 self._log(
-                    t("[WARN] Forcing shutdown of busy background worker '{name}'.", name=worker.__class__.__name__),
+                    t(
+                        "[WARN] Forcing shutdown of busy background worker '{name}' ({label}).",
+                        name=worker.__class__.__name__,
+                        label=self._worker_label(worker),
+                    ),
                     color="#FFC107",
                 )
                 worker.terminate()

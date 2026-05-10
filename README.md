@@ -15,7 +15,7 @@
 
 ---
 
-> **Available in:** [English](README.md) · [Espa·ol](README_es.md) · [Portugu·s](README_br.md)
+> **Available in:** [English](README.md) · [Español](README_es.md) · [Português](README_br.md)
 
 ---
 
@@ -109,7 +109,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://r
 >    enables WSL Windows features, installs Python 3.12 + Node.js LTS via winget,
 >    creates a `.venv` virtual environment, and installs all project dependencies.
 > 5. **Ready to launch** — When the process completes, the application is fully
->    configured and can be started with `python main.py` from the cloned directory.
+>    configured and can be started with `.\.venv\Scripts\python.exe .\main.py` from the cloned directory.
 >
 > **Requirements:** Administrator privileges (the script will auto-elevate via
 > UAC prompt), Git must be installed and on PATH, and `winget` must be available
