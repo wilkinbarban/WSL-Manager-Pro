@@ -422,6 +422,28 @@ function Install-ProjectDependencies {
 
     # Determine project root = directory containing this script
     $projectRoot = Split-Path -Parent $PSCommandPath
+
+    # When invoked via irm ... | iex, $PSCommandPath is empty because there
+    # is no script file.  Redirect the user to install_secure.ps1 which
+    # downloads the full repository first.
+    if ([string]::IsNullOrWhiteSpace($projectRoot)) {
+        Write-Warn "This script was invoked via a pipe (irm ... | iex) and cannot locate the project files."
+        Write-Host ""
+        Write-Host "The one-click pipe method only works for 'install_secure.ps1', which downloads"
+        Write-Host "the full repository before delegating to this installer."
+        Write-Host ""
+        Write-Host "Run this command instead:" -ForegroundColor Cyan
+        Write-Host "  Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install_secure.ps1 | iex" -ForegroundColor White
+        Write-Host ""
+        Write-Host "Or clone the repository and run install.ps1 locally:" -ForegroundColor Cyan
+        Write-Host "  git clone https://github.com/wilkinbarban/WSL-Manager-Pro.git" -ForegroundColor White
+        Write-Host "  cd WSL-Manager-Pro" -ForegroundColor White
+        Write-Host "  .\install.ps1" -ForegroundColor White
+        Write-Host ""
+        Read-Host -Prompt "Press Enter to close this window"
+        exit 1
+    }
+
     Set-Location $projectRoot
 
     Write-Step "Creating virtual environment (.venv) if needed..."

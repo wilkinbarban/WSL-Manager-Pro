@@ -340,7 +340,13 @@ def main() -> None:
         raise SystemExit(1)
 
     app_font = QFont(app.font())
-    if app_font.pointSizeF() <= 0:
+    # Qt may report pointSize as -1 on some Windows configurations when
+    # the system font metrics haven't been fully initialised yet.
+    # We defensively provide a sensible default before QApplication
+    # distributes the font to child widgets, preventing
+    # "QFont::setPointSize: Point size <= 0 (-1)" warnings later.
+    pt = app_font.pointSize()
+    if pt <= 0:
         if app_font.pixelSize() > 0:
             screen = app.primaryScreen()
             dpi = screen.logicalDotsPerInch() if screen is not None else 96.0

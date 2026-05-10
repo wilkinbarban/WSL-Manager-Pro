@@ -15,7 +15,7 @@
 
 ---
 
-> **Available in:** [English](README.md) · [Español](README_es.md) · [Português](README_br.md)
+> **Available in:** [English](README.md) Â· [EspaÂ·ol](README_es.md) Â· [PortuguÂ·s](README_br.md)
 
 ---
 
@@ -89,19 +89,19 @@ provisioning (user account, packages, `wsl.conf`), resource limits via
 
 ### One-Click Installation (PowerShell)
 
-#### Option A — You already have the repository cloned or downloaded
+#### Option A Â· You already have the repository cloned or downloaded
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; .\install.ps1
 ```
 
-#### Option A2 — Direct bootstrap without cloning (download + run install.ps1)
+#### Option A2 Â· Direct bootstrap without cloning (download + run install.ps1)
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install.ps1 | iex
 ```
 
-#### Option B — Secure remote install (clones repo to Desktop, then delegates to install.ps1)
+#### Option B Â· Secure remote install (clones repo to Desktop, then delegates to install.ps1)
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install_secure.ps1 | iex
@@ -144,59 +144,59 @@ WSL Manager Pro/
 +-- install.ps1                 # One-click environment installer
 +-- wsl_manager_pro.spec        # PyInstaller spec file
 +-- wsl_manager_pro.rc          # Windows resource file (icon embedding)
-¦
+Â·
 +-- core/                       # Business logic
-¦   +-- __init__.py
-¦   +-- wsl_engine.py           # Facade over wsl.exe, PowerShell, post-install, .wslconfig
-¦   +-- wsl_list_parser.py      # Pure parsers for wsl --list output (testable without WSL)
-¦   +-- downloader.py           # Resumable HTTP downloads + checksum verification
-¦   +-- catalog_loader.py       # Catalogue validation, loading, and remote merge
-¦   +-- constants.py            # Timeout, retry, chunk-size, and UI-limit constants
-¦
+Â·   +-- __init__.py
+Â·   +-- wsl_engine.py           # Facade over wsl.exe, PowerShell, post-install, .wslconfig
+Â·   +-- wsl_list_parser.py      # Pure parsers for wsl --list output (testable without WSL)
+Â·   +-- downloader.py           # Resumable HTTP downloads + checksum verification
+Â·   +-- catalog_loader.py       # Catalogue validation, loading, and remote merge
+Â·   +-- constants.py            # Timeout, retry, chunk-size, and UI-limit constants
+Â·
 +-- utils/                      # Cross-cutting services
-¦   +-- __init__.py
-¦   +-- config_manager.py       # Persistent JSON config (%APPDATA%\WSLManagerPro\config.json)
-¦   +-- app_logging.py          # Rotating file logger
-¦   +-- i18n.py                 # Runtime i18n (en/es/pt) with live switching
-¦   +-- diagnostic_bundle.py    # ZIP diagnostic bundle generator
-¦   +-- worker_threads.py       # QThread workers: refresh, install, download, etc.
-¦
+Â·   +-- __init__.py
+Â·   +-- config_manager.py       # Persistent JSON config (%APPDATA%\WSLManagerPro\config.json)
+Â·   +-- app_logging.py          # Rotating file logger
+Â·   +-- i18n.py                 # Runtime i18n (en/es/pt) with live switching
+Â·   +-- diagnostic_bundle.py    # ZIP diagnostic bundle generator
+Â·   +-- worker_threads.py       # QThread workers: refresh, install, download, etc.
+Â·
 +-- ui/                         # PySide6 graphical interface
-¦   +-- __init__.py
-¦   +-- main_window.py          # QMainWindow: tabs, toolbar, workers, logging
-¦   +-- dialogs.py              # Modal dialogs + 5-page Install Wizard
-¦   +-- icons.py                # Programmatic status icons (circles) for the Dashboard
-¦   +-- theme.py                # Centralised UI colour constants
-¦   +-- tabs/                   # Extracted tab widgets (ROADMAP phase A)
-¦       +-- __init__.py
-¦       +-- dashboard_tab.py    # Distro status table with refresh and user probing
-¦       +-- manage_tab.py       # Import/export and quick actions
-¦       +-- settings_tab.py     # Paths, startup options, WSL2 resource limits
-¦
+Â·   +-- __init__.py
+Â·   +-- main_window.py          # QMainWindow: tabs, toolbar, workers, logging
+Â·   +-- dialogs.py              # Modal dialogs + 5-page Install Wizard
+Â·   +-- icons.py                # Programmatic status icons (circles) for the Dashboard
+Â·   +-- theme.py                # Centralised UI colour constants
+Â·   +-- tabs/                   # Extracted tab widgets (ROADMAP phase A)
+Â·       +-- __init__.py
+Â·       +-- dashboard_tab.py    # Distro status table with refresh and user probing
+Â·       +-- manage_tab.py       # Import/export and quick actions
+Â·       +-- settings_tab.py     # Paths, startup options, WSL2 resource limits
+Â·
 +-- resources/                  # Bundled assets
-¦   +-- i18n/
-¦   ¦   +-- en.json             # English translations (500+ keys)
-¦   ¦   +-- es.json             # Spanish translations
-¦   ¦   +-- pt.json             # Portuguese (Brazilian) translations
-¦   +-- styles/
-¦       +-- dark.qss            # Dark Qt stylesheet (~250 lines)
-¦
+Â·   +-- i18n/
+Â·   Â·   +-- en.json             # English translations (500+ keys)
+Â·   Â·   +-- es.json             # Spanish translations
+Â·   Â·   +-- pt.json             # Portuguese (Brazilian) translations
+Â·   +-- styles/
+Â·       +-- dark.qss            # Dark Qt stylesheet (~250 lines)
+Â·
 +-- assets/                     # Application icons
-¦   +-- icon.ico
-¦   +-- icon.png
-¦
+Â·   +-- icon.ico
+Â·   +-- icon.png
+Â·
 +-- tests/                      # Unit tests (32 tests, no WSL required)
-¦   +-- __init__.py
-¦   +-- test_app_logging.py
-¦   +-- test_catalog_loader.py
-¦   +-- test_config_manager.py
-¦   +-- test_diagnostic_bundle.py
-¦   +-- test_dialogs.py
-¦   +-- test_downloader.py
-¦   +-- test_i18n.py
-¦   +-- test_wsl_engine.py
-¦   +-- test_wsl_list_parser.py
-¦
+Â·   +-- __init__.py
+Â·   +-- test_app_logging.py
+Â·   +-- test_catalog_loader.py
+Â·   +-- test_config_manager.py
+Â·   +-- test_diagnostic_bundle.py
+Â·   +-- test_dialogs.py
+Â·   +-- test_downloader.py
+Â·   +-- test_i18n.py
+Â·   +-- test_wsl_engine.py
+Â·   +-- test_wsl_list_parser.py
+Â·
 +-- docs/                       # Design documents
     +-- adrs/
         +-- 0001-qprocess-vs-subprocess.md
@@ -430,248 +430,4 @@ Oracle Linux 9.5.
 | `auto_refresh_interval_sec` | `15` | Dashboard auto-refresh interval |
 | `wsl_version` | `2` | Preferred WSL version (1 or 2) |
 | `diagnostic_log_tail_lines` | `200` | Log lines included in diagnostic ZIP |
-| `download_states` | `{}` | Resume metadata for partial downloads |
-| `installed_distros` | `[]` | Registry of distros installed by this app |
-
----
-
-## User Interface Features
-
-### Toolbar
-
-- **Install** --- Opens the 5-page Install Wizard.
-- **Refresh** --- Refreshes the distro list.
-- **Shutdown All** --- Runs `wsl --shutdown`.
-- **Language selector** --- Switches UI language live (en / es / pt).
-
-### Dashboard Tab
-
-- 7-column table: status icon, name, state, WSL version, default marker,
-  user configuration status, action button.
-- Manual Refresh and Auto-Refresh (configurable interval, minimum 15 s).
-- Re-scan User Status button for probing default users.
-- Right-click context menu: Set Default, Terminate, Export, Open Shell
-  (user/root), Full System Update, Repair (conditional), Unregister.
-- Empty state with Retry Detection when WSL is unavailable.
-
-### Manage Tab
-
-- **Import:** tar path, WSL name, install directory ? `wsl --import`.
-- **Export:** distro selector + save path ? `wsl --export`.
-- **Quick Actions:** Set Default, Terminate, Shutdown All, Open Shell
-  (user/root), Full System Update, Install via winget, Repair (Oracle/SUSE),
-  Unregister, Deep Clean.
-
-### Settings Tab
-
-- Default installation and download directories.
-- Startup options: run as admin, check for updates, update repo URL.
-- WSL 2 resource limits: memory, swap, processors, localhost forwarding,
-  VM idle timeout (advanced toggle).
-- **Apply & Write .wslconfig** button (worker in background).
-- **Export Diagnostic Bundle** button (ZIP with app version, log tail,
-  `wsl --version`, `wsl --status`).
-- **Save Settings** button (persists to `config.json`).
-
-### Install Wizard
-
-- **Page 1** --- Select distro from merged catalogue (local + online).
-- **Page 2** --- Configure paths and WSL name.
-- **Page 3** --- User account (optional), system update, systemd, profile
-  save/load.
-- **Page 4** --- Summary review.
-- **Page 5** --- Live progress log with stage transitions (Download -> Extract ?
-  Import -> Post-install -> Complete).
-
-For Oracle Linux and SUSE Enterprise (legacy interactive distros), the wizard
-may delegate to an external PowerShell window.
-
----
-
-## WSL Engine (`WslEngine`)
-
-- Resolves `wsl.exe` path from `System32`, `SysNative`, or `PATH`.
-- Uses `CREATE_NO_WINDOW` on all subprocesses to avoid console popups.
-- Decodes output with UTF-16 LE first (meta-commands), then UTF-8 (bash).
-- Streaming generators (`_popen_stream`, `_popen_stream_checked`) for
-  real-time output.
-- Explicit timeouts: 600 s for import/export, 300 s for set-version,
-  120 s for user validation, 20 s for user probing.
-- Supports all `wsl.exe` subcommands: import, export, unregister,
-  set-default, set-version, terminate, shutdown, mount.
-
----
-
-## Download Manager (`DownloadManager`)
-
-- **Chunk size:** 128 KiB.
-- **Resume:** HTTP Range requests; auto-detects existing file size.
-- **Retry:** up to 3 attempts on network/IO errors.
-- **Progress:** callback `(bytes_done, total_bytes)`; `total_bytes` may be 0
-  when the server omits `Content-Length`.
-- **Cancellation:** cooperative via `threading.Event`.
-- **HTTP 416:** treated as "file already complete" --- verifies checksum if
-  provided and returns.
-- **Archive extraction:** APPX (ZIP -> locate rootfs tar) and Arch bootstrap
-  (`.tar.zst` -> repack as plain `tar.gz`).
-
----
-
-## Background Workers (Qt)
-
-All workers inherit from `BaseWorker` (or `CancellableWorker`) and run on
-`QThread`.  The `MainWindow` keeps references in `_active_workers` to prevent
-garbage collection of active threads.
-
-Communication pattern:
-
-```
-Worker thread  -- signal --?  Main thread slot
------------------------------------------------
-log_message(str)        ? append to log console
-error_occurred(str)     ? show error in log + status bar
-progress(int, int)      ? update progress bar
-stage_changed(str)      ? update status label
-finished_ok()           ? notify completion + cleanup
-```
-
----
-
-## Internationalisation (i18n)
-
-The application supports **three languages** with live switching (no restart
-required):
-
-| Code | Language | File |
-|------|----------|------|
-| `en` | English | `resources/i18n/en.json` |
-| `es` | Espa---ol (Spanish) | `resources/i18n/es.json` |
-| `pt` | Portugu---s (Brazilian) | `resources/i18n/pt.json` |
-
-**Key features:**
-- **Fallback chain:** current language -> English ? raw key (so untranslated
-  strings are visible and can be reported).
-- **String formatting:** `t("Downloaded {pct}%", pct=75)`.
-- **Live switching:** `language_changed` Qt signal triggers `retranslate_ui()`
-  on all tabs and dialogs.
-- **PyInstaller-compatible:** resource lookup uses `sys._MEIPASS` when bundled.
-- **Graceful degradation:** JSON parse errors produce empty catalogues
-  (keys fall back to English).
-
----
-
-## Observability (Logging & Diagnostics)
-
-### Logging
-
-- **Rotating file handler:** `%LOCALAPPDATA%\WSLManagerPro\logs\app.log`
-  (2 MB max, 5 backups, UTF-8).
-- **Format:** `YYYY-MM-DD HH:MM:SS | LEVEL | message`.
-- **Idempotent setup:** `configure_logging()` can be called multiple times;
-  only one handler is ever attached.
-- **UI log console:** supports keyword filtering, copy-all, copy-selection,
-  and HTML colour coding.
-- **Security:** passwords are never logged in normal operation (enforced by
-  convention at every call site).
-
-### Diagnostic Bundle (ZIP)
-
-Generated via the Settings tab. Contents:
-- `README.txt` --- Generation timestamp, app version, command status, privacy
-  disclaimer.
-- `log_tail.txt` --- Last N lines of the in-app log console (configurable).
-- `wsl_version.txt` --- Output of `wsl --version`.
-- `wsl_status.txt` --- Output of `wsl --status`.
-
-No secrets by design. The README includes a reminder to review log content
-before sharing.
-
----
-
-## Privileges and Security
-
-- **Administrator elevation:** the application prompts to relaunch elevated
-  on startup. If the user declines, it runs in limited (read-only) mode and
-  disables the `run_as_admin` preference.
-- **Linux passwords:** during post-install, the user's password is written to
-  a temporary file inside the guest distro and deleted immediately after
-  `chpasswd` reads it. It is never visible via `ps` or logged to the console.
-- **Username validation:** enforced at both the UI (`UserCreationDialog`) and
-  engine (`build_post_install_steps`) layers with the regex
-  `^[a-z_][a-z0-9_-]{0,30}$`.
-- **No hardcoded secrets:** the codebase contains no API keys, tokens, or
-  hardcoded credentials.
-
----
-
-## Build & Distribution
-
-### One-File EXE (PyInstaller)
-
-```powershell
-.\build.ps1
-```
-
-Invokes PyInstaller with `wsl_manager_pro.spec`, producing a standalone
-`WSLManagerPro.exe` in `dist/`.  The executable bundles all Python modules
-(`.pyz` archive), `distros.json`, translations (`resources/i18n/*.json`),
-the dark stylesheet (`resources/styles/dark.qss`), and the application icon
-(`assets/icon.ico`, embedded via `.rc` file).
-
-### Manual Build
-
-```powershell
-python -m PyInstaller --clean wsl_manager_pro.spec
-```
-
----
-
-## Development, Testing & CI
-
-### Running Tests
-
-```bash
-pip install -e ".[dev]"
-pytest tests/ -q
-```
-
-All **32 tests pass** without requiring `wsl.exe` --- the parsers are pure
-functions and the downloader/engine tests use mocks.
-
-### Linting
-
-```bash
-ruff check core/ utils/ tests/ main.py
-```
-
-Ruff is configured in `pyproject.toml` (target Python 3.10, line length 100).
-The `ui/` directory is temporarily excluded pending style review.
-
-### CI Pipeline
-
-On every push or pull request to `main` or `master`, the CI workflow:
-1. Installs the project with the `dev` extra.
-2. Runs `ruff check core utils tests`.
-3. Runs `pytest`.
-
----
-
-## Roadmap
-
-See [`ROADMAP.md`](ROADMAP.md) for the full multi-phase development plan
-(150+ tasks across 8 phases: UI refactor, tooling, observability, config,
-privileges, UX, packaging, and engine improvements).
-
----
-
-## License
-
-This project is licensed under the **GNU General Public License v3.0 (GPL-3.0)**.
-See the [LICENSE](LICENSE) file for the full text.
-
-Copyright (C) 2026 WSL Manager Pro Contributors.
-
-This program is free software: you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later
-version.
+| `download_states` | `{}` | Resume metada
