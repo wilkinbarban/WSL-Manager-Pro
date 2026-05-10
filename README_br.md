@@ -1,4 +1,4 @@
-﻿# WSL Manager Pro
+# WSL Manager Pro
 
 [![CI](https://github.com/wilkinbarban/WSL-Manager-Pro/actions/workflows/ci.yml/badge.svg)](https://github.com/wilkinbarban/WSL-Manager-Pro/actions/workflows/ci.yml)
 [![Licença: GPL v3](https://img.shields.io/badge/Licença-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
@@ -134,7 +134,7 @@ WSL Manager Pro/
 │
 ├── utils/                      # Serviços transversais
 │   ├── __init__.py
-│   ├── config_manager.py       # Config JSON persistente (%APPDATA%\WSLManagerPro\config.json)
+│   ├── config_manager.py       # Config JSON persistente
 │   ├── app_logging.py          # Logger de arquivo rotativo
 │   ├── i18n.py                 # i18n em tempo de execução (en/es/pt) com troca ao vivo
 │   ├── diagnostic_bundle.py    # Gerador de pacote ZIP de diagnóstico
@@ -146,9 +146,9 @@ WSL Manager Pro/
 │   ├── dialogs.py              # Diálogos modais + Assistente de Instalação de 5 páginas
 │   ├── icons.py                # Ícones de status programáticos (círculos) para o Dashboard
 │   ├── theme.py                # Constantes de cor centralizadas da UI
-│   └── tabs/                   # Widgets de aba extraídos (fase A do ROADMAP)
+│   └── tabs/
 │       ├── __init__.py
-│       ├── dashboard_tab.py    # Tabela de status de distros com atualização e sondagem
+│       ├── dashboard_tab.py    # Tabela de status de distros
 │       ├── manage_tab.py       # Importar/exportar e ações rápidas
 │       └── settings_tab.py     # Caminhos, opções de inicialização, limites WSL2
 │

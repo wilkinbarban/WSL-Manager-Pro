@@ -134,7 +134,7 @@ WSL Manager Pro/
 │
 ├── utils/                      # Servicios transversales
 │   ├── __init__.py
-│   ├── config_manager.py       # Configuración JSON persistente (%APPDATA%\WSLManagerPro\config.json)
+│   ├── config_manager.py       # Configuración JSON persistente
 │   ├── app_logging.py          # Logger de archivo rotativo
 │   ├── i18n.py                 # i18n en tiempo de ejecución (en/es/pt) con cambio en vivo
 │   ├── diagnostic_bundle.py    # Generador de paquete ZIP de diagnóstico
@@ -146,11 +146,11 @@ WSL Manager Pro/
 │   ├── dialogs.py              # Diálogos modales + Asistente de instalación de 5 páginas
 │   ├── icons.py                # Iconos de estado programáticos (círculos) para el Dashboard
 │   ├── theme.py                # Constantes de color centralizadas para la UI
-│   └── tabs/                   # Widgets de pestaña extraídos (fase A del ROADMAP)
+│   └── tabs/
 │       ├── __init__.py
-│       ├── dashboard_tab.py    # Tabla de estado de distros con actualización y sondeo de usuarios
+│       ├── dashboard_tab.py    # Tabla de estado de distros
 │       ├── manage_tab.py       # Importar/exportar y acciones rápidas
-│       └── settings_tab.py     # Rutas, opciones de inicio, límites de recursos WSL2
+│       └── settings_tab.py     # Rutas, opciones de inicio, límites WSL2
 │
 ├── resources/                  # Activos empaquetados
 │   ├── i18n/
