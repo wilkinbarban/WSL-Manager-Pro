@@ -36,6 +36,7 @@ import re
 import shlex
 import shutil
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Generator, Optional
@@ -46,6 +47,17 @@ from core.constants import (
     WSL_VALIDATE_USER_TIMEOUT,
 )
 from core.wsl_list_parser import parse_wsl_list_online, parse_wsl_list_verbose
+
+# ---------------------------------------------------------------------------
+# Cross-platform helpers for subprocess creation flags
+# ---------------------------------------------------------------------------
+
+#: ``subprocess.CREATE_NO_WINDOW`` is Windows-only.  On Linux/macOS this
+#: constant does not exist, so we fall back to 0 (no flags).
+#: Used by :meth:`WslEngine._run`, :meth:`WslEngine._popen_stream`,
+#: :meth:`WslEngine._popen_stream_checked`, :meth:`WslEngine.install_via_winget`,
+#: and :meth:`WslEngine.install_via_dism`.
+_NO_WINDOW_FLAG: int = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
 # ---------------------------------------------------------------------------
 # Data model
@@ -253,7 +265,7 @@ class WslEngine:
                 cmd,
                 capture_output=True,
                 timeout=timeout,
-                creationflags=subprocess.CREATE_NO_WINDOW,
+                creationflags=_NO_WINDOW_FLAG,
             )
         except subprocess.TimeoutExpired as exc:
             raise WslCommandError(f"WSL command timed out after {timeout}s") from exc
@@ -293,7 +305,7 @@ class WslEngine:
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            creationflags=subprocess.CREATE_NO_WINDOW,
+            creationflags=_NO_WINDOW_FLAG,
         ) as proc:
             assert proc.stdout is not None
             for raw_line in iter(proc.stdout.readline, b""):
@@ -322,7 +334,7 @@ class WslEngine:
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            creationflags=subprocess.CREATE_NO_WINDOW,
+            creationflags=_NO_WINDOW_FLAG,
         ) as proc:
             assert proc.stdout is not None
             for raw_line in iter(proc.stdout.readline, b""):
@@ -672,7 +684,7 @@ class WslEngine:
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            creationflags=subprocess.CREATE_NO_WINDOW,
+            creationflags=_NO_WINDOW_FLAG,
         ) as proc:
             assert proc.stdout is not None
             for raw in iter(proc.stdout.readline, b""):
@@ -726,7 +738,7 @@ class WslEngine:
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            creationflags=subprocess.CREATE_NO_WINDOW,
+            creationflags=_NO_WINDOW_FLAG,
         ) as proc:
             assert proc.stdout is not None
             for raw in iter(proc.stdout.readline, b""):
