@@ -27,7 +27,7 @@
 param(
     [string]$InstallDir = "$env:USERPROFILE\Desktop\WSL-Manager-Pro",
     [string]$RepoUrl   = "https://github.com/wilkinbarban/WSL-Manager-Pro.git",
-    [string]$Branch    = "main"
+    [string]$Branch    = "master"
 )
 
 Set-StrictMode -Version Latest
