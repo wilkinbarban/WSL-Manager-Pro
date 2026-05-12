@@ -12,14 +12,12 @@
          Platform) via DISM.
       3. Installs WSL base components if ``wsl.exe`` is missing.
       4. Sets the default WSL version to 2.
-      5. Installs Python 3.12 and Node.js LTS via winget (Windows Package
-         Manager).
-      6. Adds Python and npm to the system PATH.
+      5. Installs Python 3.12 via winget (Windows Package Manager).
+      6. Adds Python to the system PATH.
       7. Creates a Python virtual environment (``.venv``).
       8. Upgrades pip / setuptools / wheel inside the venv.
       9. Installs Python dependencies from ``requirements.txt``.
-     10. Installs Node.js dependencies from ``package.json`` (if present).
-     11. Verifies core Python imports (PySide6, requests, zstandard) and
+     10. Verifies core Python imports (PySide6, requests, zstandard) and
          checks WSL command availability.
 
     The script is **idempotent**: running it multiple times is safe —
@@ -193,8 +191,8 @@ function Assert-LocalScriptInvocation {
     Write-Host "Run this command instead:" -ForegroundColor Cyan
     Write-Host "  Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install_secure.ps1 | iex" -ForegroundColor White
     Write-Host ""
-    Write-Host "Or clone the repository and run install.ps1 locally:" -ForegroundColor Cyan
-    Write-Host "  git clone https://github.com/wilkinbarban/WSL-Manager-Pro.git" -ForegroundColor White
+    Write-Host "Or download the repository ZIP from GitHub and run install.ps1 locally:" -ForegroundColor Cyan
+    Write-Host "  https://github.com/wilkinbarban/WSL-Manager-Pro/archive/refs/heads/master.zip" -ForegroundColor White
     Write-Host "  cd WSL-Manager-Pro" -ForegroundColor White
     Write-Host "  .\install.ps1" -ForegroundColor White
     Write-Host ""
@@ -390,18 +388,18 @@ function Enable-WslFeatures {
 function Install-Tooling {
 <#
 .SYNOPSIS
-    Install Python 3.12 and Node.js LTS via winget, then configure PATH.
+    Install Python 3.12 via winget, then configure PATH.
 
 .DESCRIPTION
     Phase 2 of the installer:
       1. Verifies ``winget`` is available.
-      2. Installs Python 3.12 and Node.js LTS via ``Install-WithWingetIfMissing``.
+      2. Installs Python 3.12 via ``Install-WithWingetIfMissing``.
       3. Refreshes the process PATH.
       4. Resolves the Python install directory and adds it (plus its
          ``Scripts\`` subdirectory) to the system PATH.
-      5. Confirms both ``python`` and ``npm`` are now on PATH.
+      5. Confirms ``python`` is now on PATH.
 
-    Throws if ``winget`` is missing or if the commands are still
+    Throws if ``winget`` is missing or if ``python`` is still
     unavailable after installation.
 #>
     Write-Section "Tooling Installation"
@@ -410,9 +408,8 @@ function Install-Tooling {
         throw "winget was not found. Install App Installer from Microsoft Store and rerun this script."
     }
 
-    # Install core language runtimes
+    # Install Python runtime
     Install-WithWingetIfMissing -Id "Python.Python.3.12" -Label "Python 3.12"
-    Install-WithWingetIfMissing -Id "OpenJS.NodeJS.LTS" -Label "Node.js LTS"
     Update-ProcessPath
 
     # Ensure Python directory and its Scripts\ are on the system PATH
@@ -425,14 +422,11 @@ function Install-Tooling {
         Write-Warn "Could not resolve Python install directory automatically for PATH update."
     }
 
-    # Final sanity checks
+    # Final sanity check
     if (-not (Test-Command "python")) {
         throw "python command is still not available after installation."
     }
-    if (-not (Test-Command "npm")) {
-        throw "npm command is still not available after Node.js installation."
-    }
-    Write-Ok "Python and npm are available."
+    Write-Ok "Python is available."
 }
 
 function Install-ProjectDependencies {
@@ -447,7 +441,6 @@ function Install-ProjectDependencies {
       2. Upgrades pip, setuptools, and wheel inside the venv.
       3. Installs Python packages from ``requirements.txt``
          (PySide6, requests, zstandard).
-      4. Installs Node.js packages from ``package.json`` (if present).
 
     The project root is inferred from the script's own location, so the
     script can be run from any working directory.
@@ -483,18 +476,6 @@ function Install-ProjectDependencies {
         Write-Ok "Python dependencies installed."
     } else {
         Write-Warn "requirements.txt not found. Skipping Python dependency install."
-    }
-
-    # Node.js dependencies (if the project has a package.json)
-    if (Test-Path "package.json") {
-        Write-Step "Installing npm dependencies from package.json..."
-        npm install
-        if ($LASTEXITCODE -ne 0) {
-            throw "npm install failed."
-        }
-        Write-Ok "npm dependencies installed."
-    } else {
-        Write-Ok "No package.json found. npm dependency installation skipped."
     }
 }
 
@@ -548,7 +529,7 @@ Assert-Administrator
 # Phase 2: enable WSL features and install WSL base components
 Enable-WslFeatures
 
-# Phase 3: install Python 3.12 + Node.js LTS via winget
+# Phase 3: install Python 3.12 via winget
 Install-Tooling
 
 # Phase 4: create venv and install project dependencies

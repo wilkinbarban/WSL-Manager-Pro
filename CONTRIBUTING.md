@@ -24,7 +24,7 @@ the [Contributor Covenant](https://www.contributor-covenant.org/).
 .\install.ps1
 ```
 
-This fully automates the environment setup (WSL features, Python, Node,
+This fully automates the environment setup (WSL features, Python,
 venv, and dependencies).
 
 ### Manual Setup

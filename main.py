@@ -21,7 +21,6 @@ Usage
 from __future__ import annotations
 
 import importlib.metadata as importlib_metadata
-import json
 import os
 import re
 import shutil
@@ -186,7 +185,6 @@ def _detect_missing_runtime_dependencies() -> list[tuple[str, str]]:
       - Python version
       - required Python distributions from requirements.txt
       - WSL executable availability on Windows
-      - npm and node_modules only when package.json exists
     """
     missing: list[tuple[str, str]] = []
 
@@ -223,31 +221,6 @@ def _detect_missing_runtime_dependencies() -> list[tuple[str, str]]:
                 "WSL is not installed or not available in PATH.",
                 "wsl --install --no-distribution",
             ))
-
-    package_json = ROOT / "package.json"
-    if package_json.exists():
-        try:
-            payload = json.loads(package_json.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            payload = {}
-        deps = payload.get("dependencies") or {}
-        dev_deps = payload.get("devDependencies") or {}
-        has_npm_deps = bool(deps) or bool(dev_deps)
-        if has_npm_deps:
-            if shutil.which("npm") is None:
-                install_node_cmd = (
-                    "winget install -e --id OpenJS.NodeJS.LTS "
-                    "--accept-source-agreements --accept-package-agreements"
-                )
-                missing.append((
-                    "npm is required by package.json but was not found.",
-                    install_node_cmd,
-                ))
-            elif not (ROOT / "node_modules").exists():
-                missing.append((
-                    "Node dependencies are not installed (node_modules missing).",
-                    "npm install",
-                ))
 
     return missing
 
@@ -340,11 +313,11 @@ def main() -> None:
         raise SystemExit(1)
 
     app_font = QFont(app.font())
-    # Qt may report pointSize as -1 on some Windows configurations when
-    # the system font metrics haven't been fully initialised yet.
-    # We defensively provide a sensible default before QApplication
-    # distributes the font to child widgets, preventing
-    # "QFont::setPointSize: Point size <= 0 (-1)" warnings later.
+    # Force a sensible default point size immediately to prevent
+    # "QFont::setPointSize: Point size <= 0 (-1)" warnings that can be
+    # triggered when Qt calculates font metrics for combo-box layout
+    # policies (e.g. SizeAdjustPolicy.AdjustToContents) before the font
+    # is fully initialised.
     pt = app_font.pointSize()
     if pt <= 0:
         if app_font.pixelSize() > 0:
@@ -354,11 +327,16 @@ def main() -> None:
             app_font.setPointSize(inferred_pt)
         else:
             app_font.setPointSize(10)
-        app.setFont(app_font)
+    # Apply the corrected font unconditionally to ensure all child widgets
+    # inherit a valid point size from the start.
+    app.setFont(app_font)
     app.setStyleSheet(_load_dark_stylesheet())
     icon_path = _resolve_app_icon_path()
     if icon_path:
-        app.setWindowIcon(QIcon(icon_path))
+        app_icon = QIcon(icon_path)
+        app.setWindowIcon(app_icon)
+    else:
+        app_icon = None
 
     from utils.app_logging import configure_logging
     from utils.config_manager import ConfigManager
@@ -393,8 +371,8 @@ def main() -> None:
     from ui.main_window import MainWindow
 
     window = MainWindow(is_admin=is_admin)
-    if icon_path:
-        window.setWindowIcon(QIcon(icon_path))
+    if icon_path and app_icon is not None:
+        window.setWindowIcon(app_icon)
     window.show()
     sys.exit(app.exec())
 

@@ -1,11 +1,12 @@
 <#
 .SYNOPSIS
-    WSL Manager Pro — Secure remote installer (bootstrap without cloning).
+    WSL Manager Pro — Secure remote installer (download without Git).
 
 .DESCRIPTION
-    Downloads the latest WSL Manager Pro repository from GitHub to the
-    user's Desktop, verifies the downloaded files, and delegates to the
-    local ``install.ps1`` for fully automated environment setup.
+    Downloads the latest WSL Manager Pro repository from GitHub as a ZIP
+    archive to the user's Desktop, extracts it, verifies the downloaded
+    files, and delegates to the local ``install.ps1`` for fully automated
+    environment setup.
 
     This script is designed to be invoked remotely via::
 
@@ -16,17 +17,18 @@
 
 .NOTES
     * Requires Administrator privileges (auto-elevates via install.ps1).
-    * The repository is cloned to ``%USERPROFILE%\Desktop\WSL-Manager-Pro``
-      by default.
-    * If the target directory already exists, the script updates it via
-      ``git pull`` (if a ``.git`` folder is present) or prompts the user.
+    * The repository is downloaded and extracted to
+      ``%USERPROFILE%\Desktop\WSL-Manager-Pro`` by default.
+    * If the target directory already exists, it is removed and re-created.
+    * No Git installation required — uses built-in PowerShell ``Invoke-WebRequest``
+      and ``Expand-Archive``.
     * All console messages are in English.
 #>
 
 [CmdletBinding()]
 param(
     [string]$InstallDir = "$env:USERPROFILE\Desktop\WSL-Manager-Pro",
-    [string]$RepoUrl   = "https://github.com/wilkinbarban/WSL-Manager-Pro.git",
+    [string]$RepoUrl   = "https://github.com/wilkinbarban/WSL-Manager-Pro",
     [string]$Branch    = "master"
 )
 
@@ -47,18 +49,12 @@ function Write-Banner {
 function Write-Step { param([string]$M) Write-Host "[STEP] $M" -ForegroundColor Yellow }
 function Write-Ok   { param([string]$M) Write-Host "[OK]   $M" -ForegroundColor Green }
 function Write-Err  { param([string]$M) Write-Host "[ERR]  $M" -ForegroundColor Red; throw $M }
+function Write-Warn { param([string]$M) Write-Host "[WARN] $M" -ForegroundColor DarkYellow }
 
 function Test-IsAdministrator {
     $id = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = New-Object Security.Principal.WindowsPrincipal($id)
     return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-}
-
-# ===========================================================================
-# Prerequisites check
-# ===========================================================================
-function Test-GitAvailable {
-    return $null -ne (Get-Command git -ErrorAction SilentlyContinue)
 }
 
 # ===========================================================================
@@ -70,51 +66,74 @@ Write-Host "Repository       : $RepoUrl"   -ForegroundColor Gray
 Write-Host "Branch           : $Branch"     -ForegroundColor Gray
 Write-Host ""
 
-# Step 1 — Check prerequisites
-Write-Step "Checking prerequisites..."
-if (-not (Test-GitAvailable)) {
-    Write-Err "Git is not installed or not on PATH. Please install Git from https://git-scm.com and retry."
-}
-Write-Ok "Git is available."
+# Step 1 — Prepare ZIP download URL
+$zipUrl = "$RepoUrl/archive/refs/heads/$Branch.zip"
+$zipPath = Join-Path $env:TEMP "WSL-Manager-Pro-$Branch.zip"
+$extractPath = Join-Path $env:TEMP "WSL-Manager-Pro-extract"
 
-# Step 2 — Clone or update the repository
-if (Test-Path $InstallDir) {
-    Write-Step "Directory '$InstallDir' already exists."
-    if (Test-Path (Join-Path $InstallDir ".git")) {
-        Write-Step "Existing git repository detected. Pulling latest changes..."
-        Push-Location $InstallDir
-        try {
-            git fetch origin
-            git checkout $Branch
-            git pull origin $Branch
-            Write-Ok "Repository updated successfully."
-        } finally {
-            Pop-Location
-        }
+# Step 2 — Download repository as ZIP
+Write-Step "Downloading repository from $zipUrl ..."
+try {
+    # Remove any previous temporary files
+    if (Test-Path $zipPath) { Remove-Item -Path $zipPath -Force }
+    if (Test-Path $extractPath) { Remove-Item -Path $extractPath -Recurse -Force }
+
+    # Download with progress bar
+    Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing
+    Write-Ok "Repository ZIP downloaded successfully ($([math]::Round((Get-Item $zipPath).Length / 1KB)) KB)."
+}
+catch {
+    Write-Err "Failed to download repository from $zipUrl. Check your internet connection and try again."
+}
+
+# Step 3 — Extract ZIP
+Write-Step "Extracting archive..."
+try {
+    Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
+    Write-Ok "Archive extracted successfully."
+}
+catch {
+    Write-Err "Failed to extract the downloaded ZIP archive. The file may be corrupted."
+}
+
+# The ZIP contains a top-level folder named "WSL-Manager-Pro-<branch>"
+$extractedFolder = Join-Path $extractPath "WSL-Manager-Pro-$Branch"
+if (-not (Test-Path $extractedFolder)) {
+    # Fallback: try to find any single folder inside the extract path
+    $items = Get-ChildItem -Path $extractPath -Directory
+    if ($items.Count -eq 1) {
+        $extractedFolder = $items[0].FullName
     } else {
-        Write-Host "[WARN] Directory exists but is not a git repository." -ForegroundColor DarkYellow
-        $response = Read-Host "Remove and re-clone? (y/N)"
-        if ($response -eq 'y' -or $response -eq 'Y') {
-            Write-Step "Removing existing directory..."
-            Remove-Item -Path $InstallDir -Recurse -Force
-            Write-Step "Cloning repository..."
-            git clone --branch $Branch --depth 1 $RepoUrl $InstallDir
-            Write-Ok "Repository cloned successfully."
-        } else {
-            Write-Host "[INFO] Will attempt to use existing directory. If install.ps1 is missing, it will fail." -ForegroundColor Gray
-        }
+        Write-Err "Could not locate the extracted repository folder."
     }
-} else {
-    Write-Step "Cloning repository to '$InstallDir'..."
-    $parentDir = Split-Path -Parent $InstallDir
-    if (-not (Test-Path $parentDir)) {
-        New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
-    }
-    git clone --branch $Branch --depth 1 $RepoUrl $InstallDir
-    Write-Ok "Repository cloned successfully."
+}
+Write-Ok "Found extracted repository at: $extractedFolder"
+
+# Step 4 — Copy to target directory
+Write-Step "Copying files to '$InstallDir'..."
+if (Test-Path $InstallDir) {
+    Write-Step "Removing previous installation directory..."
+    Remove-Item -Path $InstallDir -Recurse -Force
+    Write-Ok "Previous installation removed."
 }
 
-# Step 3 — Verify critical files
+# Create parent directory if needed
+$parentDir = Split-Path -Parent $InstallDir
+if (-not (Test-Path $parentDir)) {
+    New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+}
+
+# Move contents (not the folder itself) to the target
+Copy-Item -Path "$extractedFolder\*" -Destination $InstallDir -Recurse -Force
+Write-Ok "Files copied to target directory."
+
+# Step 5 — Clean up temporary files
+Write-Step "Cleaning up temporary files..."
+Remove-Item -Path $zipPath -Force -ErrorAction SilentlyContinue
+Remove-Item -Path $extractPath -Recurse -Force -ErrorAction SilentlyContinue
+Write-Ok "Temporary files cleaned up."
+
+# Step 6 — Verify critical files
 Write-Step "Verifying critical files..."
 $installScript = Join-Path $InstallDir "install.ps1"
 $distrosFile   = Join-Path $InstallDir "distros.json"
@@ -124,11 +143,11 @@ if (-not (Test-Path $installScript)) { $missing += "install.ps1" }
 if (-not (Test-Path $distrosFile))   { $missing += "distros.json" }
 
 if ($missing.Count -gt 0) {
-    Write-Err "Critical files missing: $($missing -join ', '). The repository may be incomplete or the branch may not contain these files."
+    Write-Err "Critical files missing: $($missing -join ', '). The download may be incomplete or the branch may not contain these files."
 }
 Write-Ok "All critical files present."
 
-# Step 4 — Delegate to install.ps1
+# Step 7 — Delegate to install.ps1
 Write-Host ""
 Write-Host ("=" * 70) -ForegroundColor Cyan
 Write-Host "  Delegating to install.ps1 for automated setup..." -ForegroundColor White
