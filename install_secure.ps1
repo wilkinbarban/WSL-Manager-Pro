@@ -123,7 +123,11 @@ if (-not (Test-Path $parentDir)) {
     New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
 }
 
-# Move contents (not the folder itself) to the target
+# Re-create the target directory explicitly (ensures it's a container,
+# not a leftover leaf item, which can happen when running via iex).
+New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
+
+# Copy contents (not the folder itself) to the target
 Copy-Item -Path "$extractedFolder\*" -Destination $InstallDir -Recurse -Force
 Write-Ok "Files copied to target directory."
 
