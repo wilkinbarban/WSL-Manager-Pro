@@ -98,28 +98,31 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://r
 > 1. **Downloads `install_secure.ps1`** — A lightweight bootstrap script (~6 KB) that
 >    is fetched directly from the repository's `master` branch via GitHub's raw
 >    content delivery.
-> 2. **Clones the full repository** — The bootstrap script downloads the entire
->    WSL Manager Pro source tree into `%USERPROFILE%\Desktop\WSL-Manager-Pro` using
->    `git clone --depth 1` (shallow clone — fast, no full history).
+> 2. **Downloads the repository as ZIP** — The bootstrap script downloads the entire
+>    WSL Manager Pro source tree as a ZIP archive (no Git required), extracts it,
+>    and copies the files to `%USERPROFILE%\Desktop\WSL-Manager-Pro`.
 > 3. **Verifies critical files** — Checks that `install.ps1` and `distros.json`
 >    are present and intact before proceeding. If anything is missing, the script
 >    halts with a clear error message.
 > 4. **Delegates to `install.ps1`** — The verified local copy of the full
 >    environment installer takes over and runs the complete setup pipeline:
->    enables WSL Windows features, installs Python 3.12 + Node.js LTS via winget,
+>    enables WSL Windows features, installs Python 3.12 via winget,
 >    creates a `.venv` virtual environment, and installs all project dependencies.
 > 5. **Ready to launch** — When the process completes, the application is fully
->    configured and can be started with `.\.venv\Scripts\python.exe .\main.py` from the cloned directory.
+>    configured and can be started with `.\.venv\Scripts\python.exe .\main.py` from the target directory.
 >
 > **Requirements:** Administrator privileges (the script will auto-elevate via
-> UAC prompt), Git must be installed and on PATH, and `winget` must be available
-> (bundled with App Installer on Windows 10/11).
+> UAC prompt) and `winget` must be available (bundled with App Installer on Windows 10/11).
+> **No Git installation required.**
 
 ### Manual Installation (classic alternative)
 
 ```powershell
-# 1. Clone or download the repository
-git clone https://github.com/wilkinbarban/WSL-Manager-Pro.git
+# 1. Download the ZIP from GitHub or clone the repository
+#    ZIP: https://github.com/wilkinbarban/WSL-Manager-Pro/archive/refs/heads/master.zip
+#    or
+#    git clone https://github.com/wilkinbarban/WSL-Manager-Pro.git
+
 cd WSL-Manager-Pro
 
 # 2. Create and activate a virtual environment

@@ -86,30 +86,32 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://r
 > 1. **Descarga `install_secure.ps1`** — Un script de arranque ligero (~6 KB) que
 >    se obtiene directamente desde la rama `master` del repositorio a través del
 >    servicio de contenido raw de GitHub.
-> 2. **Clona el repositorio completo** — El script de arranque descarga todo el
->    código fuente de WSL Manager Pro en `%USERPROFILE%\Desktop\WSL-Manager-Pro`
->    usando `git clone --depth 1` (clon superficial — rápido, sin historial completo).
+> 2. **Descarga el repositorio como ZIP** — El script de arranque descarga todo el
+>    código fuente de WSL Manager Pro como un archivo ZIP (no requiere Git), lo
+>    extrae y copia los archivos a `%USERPROFILE%\Desktop\WSL-Manager-Pro`.
 > 3. **Verifica archivos críticos** — Comprueba que `install.ps1` y `distros.json`
 >    estén presentes e intactos antes de continuar. Si algo falta, el script se
 >    detiene con un mensaje de error claro.
 > 4. **Delega en `install.ps1`** — La copia local verificada del instalador
 >    completo de entorno toma el control y ejecuta la configuración completa:
->    habilita características WSL de Windows, instala Python 3.12 + Node.js LTS
->    mediante winget, crea un entorno virtual `.venv` e instala todas las
->    dependencias del proyecto.
+>    habilita características WSL de Windows, instala Python 3.12 mediante winget,
+>    crea un entorno virtual `.venv` e instala todas las dependencias del proyecto.
 > 5. **Listo para ejecutar** — Cuando el proceso termina, la aplicación está
 >    completamente configurada y puede iniciarse con `.\.venv\Scripts\python.exe .\main.py`
->    desde el directorio clonado.
+>    desde el directorio de destino.
 >
 > **Requisitos:** Privilegios de Administrador (el script se auto-eleva mediante
-> aviso UAC), Git debe estar instalado y en PATH, y `winget` debe estar disponible
-> (incluido con App Installer en Windows 10/11).
+> aviso UAC) y `winget` debe estar disponible (incluido con App Installer en Windows 10/11).
+> **No se requiere Git.**
 
 ### Instalación Manual (alternativa clásica)
 
 ```powershell
-# 1. Clonar o descargar el repositorio
-git clone https://github.com/wilkinbarban/WSL-Manager-Pro.git
+# 1. Descargar el ZIP desde GitHub o clonar el repositorio
+#    ZIP: https://github.com/wilkinbarban/WSL-Manager-Pro/archive/refs/heads/master.zip
+#    o
+#    git clone https://github.com/wilkinbarban/WSL-Manager-Pro.git
+
 cd WSL-Manager-Pro
 
 # 2. Crear y activar un entorno virtual
