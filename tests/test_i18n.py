@@ -36,7 +36,7 @@ def test_i18n_invalid_language_falls_back_to_english() -> None:
 
 
 def test_i18n_bundles_have_no_mojibake_markers() -> None:
-    markers = (chr(0x00C3), chr(0x00C2), chr(0x00E2))
+    markers = (chr(0x00C3), chr(0x00C2), chr(0x00E2), chr(0xFFFD))
     for lang in ("es", "pt"):
         path = Path(f"resources/i18n/{lang}.json")
         data = json.loads(path.read_text(encoding="utf-8"))
