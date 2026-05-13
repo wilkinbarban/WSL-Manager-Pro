@@ -30,7 +30,7 @@ def test_build_wslconfig_text_contains_advanced_fields() -> None:
     assert "swap=4GB" in content
     assert "processors=6" in content
     assert "localhostForwarding=false" in content
-    assert "vmIdleTimeout=120" in content
+    assert "vmIdleTimeout=120000" in content
 
 
 def test_build_post_install_steps_adds_sudoers_for_arch() -> None:
@@ -46,6 +46,8 @@ def test_build_post_install_steps_adds_sudoers_for_arch() -> None:
     )
     labels = [label for label, _cmd in steps]
     assert "Configuring passwordless sudo" in labels
+    assert "secret" not in "\n".join(cmd for _label, cmd in steps)
+    assert "$WSL_MANAGER_INITIAL_PASS" in dict(steps)["Setting password"]
     sudoers_cmd = dict(steps)["Configuring passwordless sudo"]
     assert "/etc/sudoers.d/devuser" in sudoers_cmd
 

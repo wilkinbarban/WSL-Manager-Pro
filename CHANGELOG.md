@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.1] — 2026-05-12
+
+### Added
+
+- Automatic GitHub Releases update checks at startup, with a configurable
+  release repository URL and in-app download notification.
+- Robust one-click installer compatibility checks for Windows 10/11 builds
+  before any system changes are made.
+- Safer WSL bootstrap handling for clean Windows installs, including absolute
+  `wsl.exe` resolution and clear reboot-required messaging.
+
+### Changed
+
+- Hardened archive extraction against path traversal in downloaded ZIP/TAR
+  payloads.
+- Improved Linux password handling during provisioning so secrets are not
+  embedded in generated command lines or installer scripts.
+- Corrected `.wslconfig` `vmIdleTimeout` generation to write milliseconds.
+- Rebuilt English, Spanish, and Portuguese i18n catalogs and updated README
+  documentation across all supported languages.
+
+### Fixed
+
+- Fixed stale documentation links and version metadata.
+- Added safety guards around Deep Clean cache deletion.
+- Tightened configuration validation for persisted download states.
+- Expanded automated coverage to 42 tests.
+
+---
+
 ## [1.0.0] — 2026-05-09
 
 ### Added

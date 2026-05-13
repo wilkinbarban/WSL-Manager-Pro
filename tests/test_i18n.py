@@ -44,3 +44,11 @@ def test_i18n_bundles_have_no_mojibake_markers() -> None:
             assert not any(marker in key for marker in markers)
             assert isinstance(value, str)
             assert not any(marker in value for marker in markers)
+
+
+def test_i18n_english_catalog_covers_translated_keys() -> None:
+    base = json.loads(Path("resources/i18n/en.json").read_text(encoding="utf-8"))
+    assert base
+    for lang in ("es", "pt"):
+        data = json.loads(Path(f"resources/i18n/{lang}.json").read_text(encoding="utf-8"))
+        assert set(data) <= set(base)

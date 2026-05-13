@@ -61,6 +61,7 @@ from core.downloader import (
 from core.wsl_engine import WslCommandError, WslEngine
 from utils.config_manager import ConfigManager, InstalledDistro
 from utils.i18n import t
+from utils.update_checker import UpdateCheckResult, check_latest_release
 
 # ---------------------------------------------------------------------------
 # Base workers
@@ -862,4 +863,23 @@ class WingetInstallWorker(CancellableWorker):
                 return
             if line.strip():
                 self.log_message.emit(line)
+        self.finished_ok.emit()
+
+
+class UpdateCheckWorker(BaseWorker):
+    """Check the configured GitHub Releases endpoint without blocking the UI."""
+
+    update_result = Signal(object)  # UpdateCheckResult
+
+    def __init__(self, repo_url: str, current_version: str, parent=None) -> None:
+        super().__init__(parent)
+        self._repo_url = repo_url
+        self._current_version = current_version
+
+    def _run_task(self) -> None:
+        result: UpdateCheckResult = check_latest_release(
+            self._repo_url,
+            self._current_version,
+        )
+        self.update_result.emit(result)
         self.finished_ok.emit()

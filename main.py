@@ -297,7 +297,7 @@ def main() -> None:
     app = QApplication(sys.argv)
     app.setApplicationName("WSL Manager Pro")
     app.setOrganizationName("WSLManagerPro")
-    app.setApplicationVersion("1.0.0")
+    app.setApplicationVersion("1.0.1")
 
     missing_deps = _detect_missing_runtime_dependencies()
     if missing_deps:

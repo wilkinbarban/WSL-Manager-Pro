@@ -39,7 +39,7 @@ The `[dev]` extra installs pytest, ruff, and pytest-qt.
 
 ## Project Structure
 
-See [REDME.md](REDME.md) for the complete repository structure and
+See [README.md](README.md) for the complete repository structure and
 architecture overview.
 
 ## Running the Application
@@ -57,7 +57,7 @@ for WSL operations and winget).  You can decline to run in read-only mode.
 pytest tests/ -q
 ```
 
-All 32 tests pass without requiring `wsl.exe`.  The parsers are pure
+All 42 tests pass without requiring `wsl.exe`.  The parsers are pure
 functions and the downloader/engine tests use mocks.
 
 ## Linting

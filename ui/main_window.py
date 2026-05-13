@@ -83,12 +83,14 @@ from utils.app_logging import get_logger, log_level_for_ui_line
 from utils.config_manager import ConfigManager, ConfigValidationError, InstalledDistro
 from utils.diagnostic_bundle import write_diagnostic_zip
 from utils.i18n import LANGUAGE_LABELS, SUPPORTED_LANGUAGES, get_i18n, t
+from utils.update_checker import DEFAULT_UPDATE_REPO_URL
 from utils.worker_threads import (
     ExportWorker,
     ImportWorker,
     InstallWorker,
     PostInstallWorker,
     RefreshWorker,
+    UpdateCheckWorker,
     UserStatusProbeWorker,
     WingetInstallWorker,
     WslCommandWorker,
@@ -842,21 +844,46 @@ class MainWindow(QMainWindow):
     def _maybe_check_for_updates(self) -> None:
         if not self._config_mgr.config.check_for_updates:
             return
-        repo_url = self._config_mgr.config.update_repo_url.strip()
-        if not repo_url:
-            return
-        try:
-            latest_url = repo_url.rstrip("/") + "/releases/latest"
-            self._update_banner_url = latest_url
-            self._update_banner.setText(
-                t(
-                    'A new build may be available. <a href="{url}">Open latest release</a>',
-                    url=latest_url,
-                )
+        repo_url = self._config_mgr.config.update_repo_url.strip() or DEFAULT_UPDATE_REPO_URL
+        current_version = QApplication.instance().applicationVersion()
+        worker = UpdateCheckWorker(repo_url, current_version, parent=self)
+        worker.update_result.connect(self._on_update_check_result)
+        worker.error_occurred.connect(
+            lambda error: self._log_t(
+                "[WARN] Update check failed: {error}",
+                color=COLOR_WARNING,
+                error=error,
             )
-            self._update_banner.setVisible(True)
-        except Exception:  # noqa: BLE001
-            pass
+        )
+        self._track_worker(worker, "update check")
+
+    def _on_update_check_result(self, result) -> None:
+        if not result.update_available:
+            self._log_t(
+                "[INFO] WSL Manager Pro is up to date ({version}).",
+                color=COLOR_INFO,
+                version=result.latest_version,
+            )
+            return
+        self._update_banner_url = result.release_url
+        self._update_banner.setText(
+            t(
+                'WSL Manager Pro {version} is available. <a href="{url}">Open release download</a>',
+                version=result.latest_version,
+                url=result.release_url,
+            )
+        )
+        self._update_banner.setVisible(True)
+        QMessageBox.information(
+            self,
+            t("Update available"),
+            t(
+                "WSL Manager Pro {version} is available.\n\nDownload page:\n{url}",
+                version=result.latest_version,
+                url=result.release_url,
+            ),
+            QMessageBox.StandardButton.Ok,
+        )
 
     def _open_update_link(self, url: str) -> None:
         webbrowser.open(url)
@@ -1007,17 +1034,34 @@ class MainWindow(QMainWindow):
             self._log(f"[ERROR] {exc}", color="#F44336")
 
     def _do_deep_clean(self) -> None:
+        cache_dir = Path(self._config_mgr.config.download_dir)
+        guard_reason = self._unsafe_cleanup_dir_reason(cache_dir)
+        if guard_reason:
+            QMessageBox.warning(
+                self,
+                t("Deep Clean"),
+                t("Deep clean refused for safety:\n{reason}", reason=guard_reason),
+            )
+            self._log_t(
+                "[WARN] Deep clean refused for safety: {reason}",
+                color="#FFC107",
+                reason=guard_reason,
+            )
+            return
+
         reply = QMessageBox.warning(
             self,
             t("Deep Clean"),
             t(
-                "This will do a deep cleanup to free disk space on C:\\n\\n"
+                "This will do a deep cleanup to free disk space.\n\n"
+                "Cache directory:\n{cache_dir}\n\n"
                 "- Shutdown all WSL distributions\\n"
                 "- Remove all files inside the configured download/cache directory\\n"
                 "- Remove generated install PowerShell temp scripts\\n"
                 "- Remove stale installed-distro records from this app\\n"
                 "- Remove empty orphan folders inside the configured install directory\\n\\n"
-                "Continue?"
+                "Continue?",
+                cache_dir=str(cache_dir),
             ),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
         )
@@ -1078,7 +1122,6 @@ class MainWindow(QMainWindow):
             self._log_t("[CLEANUP] Cleared cached download resume states.")
 
         # 5) Purge configured download/cache directory contents.
-        cache_dir = Path(self._config_mgr.config.download_dir)
         if cache_dir.exists() and cache_dir.is_dir():
             for child in list(cache_dir.iterdir()):
                 removed_bytes, removed_files, removed_dirs = self._remove_path_with_stats(child)
@@ -1170,6 +1213,45 @@ class MainWindow(QMainWindow):
             return True
         except OSError:
             return False
+
+    @staticmethod
+    def _unsafe_cleanup_dir_reason(path: Path) -> str:
+        raw = str(path).strip()
+        if not raw:
+            return "Cleanup directory is empty."
+        try:
+            resolved = path.expanduser().resolve()
+        except OSError as exc:
+            return f"Could not resolve cleanup directory '{path}': {exc}"
+
+        if not resolved.is_absolute():
+            return f"Cleanup directory is not absolute: {path}"
+        if resolved.parent == resolved:
+            return f"Cleanup directory points to a filesystem root: {resolved}"
+
+        project_root = Path(__file__).resolve().parent.parent.resolve()
+        protected = {
+            project_root,
+            Path.home().resolve(),
+            (Path.home() / "Desktop").resolve(),
+            (Path.home() / "Documents").resolve(),
+            (Path.home() / "Downloads").resolve(),
+            Path(tempfile.gettempdir()).resolve(),
+        }
+        for env_name in ("SystemRoot", "ProgramFiles", "ProgramFiles(x86)", "USERPROFILE"):
+            env_value = os.environ.get(env_name)
+            if env_value:
+                protected.add(Path(env_value).resolve())
+
+        for protected_path in protected:
+            if resolved == protected_path:
+                return f"Cleanup directory is a protected location: {resolved}"
+
+        try:
+            project_root.relative_to(resolved)
+            return f"Cleanup directory contains the project workspace: {resolved}"
+        except ValueError:
+            return ""
 
     def _do_export(self) -> None:
         if not self._begin_operation("export"):
@@ -1785,10 +1867,11 @@ class MainWindow(QMainWindow):
             safe_user = shlex.quote(username)
             safe_group = shlex.quote(sudo_group)
             post_lines.append(f"id -u {safe_user} >/dev/null 2>&1 || useradd -m -s /bin/bash {safe_user}")
-            # Avoid shell temp-file redirection here because this command is
-            # serialized through PowerShell and can lose redirection targets.
             post_lines.append(
-                f"printf '%s\\n' {shlex.quote(username + ':' + password)} | chpasswd"
+                "_tmpf=$(mktemp) "
+                f"&& printf '%s:%s\\n' {safe_user} \"$WSL_MANAGER_INITIAL_PASS\" > \"$_tmpf\" "
+                "&& chpasswd < \"$_tmpf\" "
+                "&& rm -f \"$_tmpf\""
             )
             post_lines.append(
                 f"getent group {safe_group} >/dev/null 2>&1 || groupadd {safe_group} ; "
@@ -1812,6 +1895,7 @@ class MainWindow(QMainWindow):
             )
             post_block = (
                 "Write-Host 'Running post-install configuration...' -ForegroundColor Cyan\n"
+                "if ($InitialPass) { $env:WSL_MANAGER_INITIAL_PASS = $InitialPass }\n"
                 "$PostCmds = @(\n"
                 f"{post_cmd_array}\n"
                 ")\n"
@@ -1820,6 +1904,7 @@ class MainWindow(QMainWindow):
                 "    wsl.exe -d $PostConfigDistro -u root -- bash -lc \"$PostCmd\"\n"
                 "    if ($LASTEXITCODE -ne 0) { throw \"Post-install failed with exit code $LASTEXITCODE\" }\n"
                 "}\n"
+                "Remove-Item Env:\\WSL_MANAGER_INITIAL_PASS -ErrorAction SilentlyContinue\n"
             )
 
         home_block = ""
@@ -1834,15 +1919,16 @@ class MainWindow(QMainWindow):
         if oracle_mode:
             script_text = (
                 "$ErrorActionPreference = 'Stop'\n"
-                f"$SourceDistro = '{online_name}'\n"
-                f"$SourceDisplayName = '{source_display_name}'\n"
-                f"$SourceLegacyName = '{source_legacy_name}'\n"
+                f"$SourceDistro = '{_ps_sq(online_name)}'\n"
+                f"$SourceDisplayName = '{_ps_sq(source_display_name)}'\n"
+                f"$SourceLegacyName = '{_ps_sq(source_legacy_name)}'\n"
                 f"$InitialUser = '{_ps_sq(username)}'\n"
-                f"$InitialPass = '{_ps_sq(password)}'\n"
-                f"$DistroName = '{target_name}'\n"
-                f"$InstallDir = '{install_dir}'\n"
-                f"$DownloadDir = '{download_dir}'\n"
-                f"$ExportFile = '{export_file}'\n"
+                "$InitialPass = $env:WSL_MANAGER_INITIAL_PASS\n"
+                "Remove-Item Env:\\WSL_MANAGER_INITIAL_PASS -ErrorAction SilentlyContinue\n"
+                f"$DistroName = '{_ps_sq(target_name)}'\n"
+                f"$InstallDir = '{_ps_sq(install_dir)}'\n"
+                f"$DownloadDir = '{_ps_sq(download_dir)}'\n"
+                f"$ExportFile = '{_ps_sq(export_file)}'\n"
                 "$LogDir = Join-Path $DownloadDir 'logs'\n"
                 "New-Item -ItemType Directory -Force $LogDir | Out-Null\n"
                 "$Ts = Get-Date -Format 'yyyyMMdd_HHmmss'\n"
@@ -1937,6 +2023,7 @@ class MainWindow(QMainWindow):
                 "Write-Host 'Press any key to close this window.' -ForegroundColor Yellow\n"
                 "}\n"
                 "finally {\n"
+                "    Remove-Item Env:\\WSL_MANAGER_INITIAL_PASS -ErrorAction SilentlyContinue\n"
                 "    Stop-Transcript | Out-Null\n"
                 "    Write-Host (\"Log saved to: {0}\" -f $LogFile) -ForegroundColor DarkGray\n"
                 "    [void][System.Console]::ReadKey($true)\n"
@@ -1945,13 +2032,15 @@ class MainWindow(QMainWindow):
         else:
             script_text = (
                 "$ErrorActionPreference = 'Stop'\n"
-                f"$SourceDistro = '{online_name}'\n"
-                f"$SourceDisplayName = '{source_display_name}'\n"
+                f"$SourceDistro = '{_ps_sq(online_name)}'\n"
+                f"$SourceDisplayName = '{_ps_sq(source_display_name)}'\n"
                 f"$DisableNoLaunch = {'$true' if disable_no_launch else '$false'}\n"
-                f"$DistroName = '{target_name}'\n"
-                f"$InstallDir = '{install_dir}'\n"
-                f"$DownloadDir = '{download_dir}'\n"
-                f"$ExportFile = '{export_file}'\n"
+                "$InitialPass = $env:WSL_MANAGER_INITIAL_PASS\n"
+                "Remove-Item Env:\\WSL_MANAGER_INITIAL_PASS -ErrorAction SilentlyContinue\n"
+                f"$DistroName = '{_ps_sq(target_name)}'\n"
+                f"$InstallDir = '{_ps_sq(install_dir)}'\n"
+                f"$DownloadDir = '{_ps_sq(download_dir)}'\n"
+                f"$ExportFile = '{_ps_sq(export_file)}'\n"
                 "$LogDir = Join-Path $DownloadDir 'logs'\n"
                 "New-Item -ItemType Directory -Force $LogDir | Out-Null\n"
                 "$Ts = Get-Date -Format 'yyyyMMdd_HHmmss'\n"
@@ -2059,6 +2148,7 @@ class MainWindow(QMainWindow):
                 "Write-Host 'Press any key to close this window.' -ForegroundColor Yellow\n"
                 "}\n"
                 "finally {\n"
+                "    Remove-Item Env:\\WSL_MANAGER_INITIAL_PASS -ErrorAction SilentlyContinue\n"
                 "    Stop-Transcript | Out-Null\n"
                 "    Write-Host (\"Log saved to: {0}\" -f $LogFile) -ForegroundColor DarkGray\n"
                 "    [void][System.Console]::ReadKey($true)\n"
@@ -2068,6 +2158,9 @@ class MainWindow(QMainWindow):
 
         ps = shutil.which("pwsh.exe") or shutil.which("powershell.exe") or "powershell.exe"
         try:
+            env = os.environ.copy()
+            if username:
+                env["WSL_MANAGER_INITIAL_PASS"] = password
             proc = subprocess.Popen(
                 [
                     ps,
@@ -2078,6 +2171,7 @@ class MainWindow(QMainWindow):
                     str(script_path),
                 ],
                 creationflags=subprocess.CREATE_NEW_CONSOLE,
+                env=env,
             )
             aliases = {target_name, online_name, source_display_name, source_legacy_name}
             for alias in aliases:

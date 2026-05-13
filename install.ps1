@@ -47,6 +47,7 @@ param()
 # ---------------------------------------------------------------------------
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+$script:WslRestartRequired = $false
 
 # ===========================================================================
 # Console output helpers
@@ -94,6 +95,22 @@ function Write-Warn {
 #>
     param([string]$Message)
     Write-Host ("[WARN] " + $Message) -ForegroundColor DarkYellow
+}
+
+function Stop-Installer {
+<#
+.SYNOPSIS
+    Print a clear final message and stop the installer without a stack trace.
+#>
+    param(
+        [Parameter(Mandatory = $true)][string]$Message,
+        [int]$ExitCode = 1
+    )
+    Write-Host ""
+    Write-Host $Message -ForegroundColor Red
+    Write-Host ""
+    Read-Host -Prompt "Press Enter to close this window"
+    exit $ExitCode
 }
 
 # ===========================================================================
@@ -164,6 +181,155 @@ function Test-Command {
 #>
     param([Parameter(Mandatory = $true)][string]$Name)
     return $null -ne (Get-Command $Name -ErrorAction SilentlyContinue)
+}
+
+function Get-WindowsCompatibilityInfo {
+<#
+.SYNOPSIS
+    Read Windows version/build information and determine WSL compatibility.
+
+.DESCRIPTION
+    WSL Manager Pro targets the modern WSL install path documented by
+    Microsoft: Windows 10 version 2004+ (build 19041+) or Windows 11.
+    The installer checks this before changing Windows features.
+#>
+    $os = Get-CimInstance -ClassName Win32_OperatingSystem
+    $build = [int]$os.BuildNumber
+    $version = [version]$os.Version
+    $caption = [string]$os.Caption
+    $isClient = [int]$os.ProductType -eq 1
+    $isWindows10OrNewer = $version.Major -ge 10
+    $isModernWslBuild = $build -ge 19041
+    $isCompatible = $isClient -and $isWindows10OrNewer -and $isModernWslBuild
+
+    return [PSCustomObject]@{
+        Caption = $caption
+        Version = $version.ToString()
+        Build = $build
+        IsClient = $isClient
+        IsCompatible = $isCompatible
+    }
+}
+
+function Assert-WindowsSupportsWsl {
+<#
+.SYNOPSIS
+    Stop before making changes when Windows cannot support this WSL setup.
+#>
+    Write-Section "Windows Compatibility"
+    $info = Get-WindowsCompatibilityInfo
+    Write-Host ("Detected OS : {0}" -f $info.Caption) -ForegroundColor Gray
+    Write-Host ("Version     : {0}" -f $info.Version) -ForegroundColor Gray
+    Write-Host ("Build       : {0}" -f $info.Build) -ForegroundColor Gray
+
+    if ($info.IsCompatible) {
+        Write-Ok "Windows is compatible with the modern WSL installation flow."
+        return
+    }
+
+    $reason = @()
+    if (-not $info.IsClient) {
+        $reason += "This installer targets Windows 10/11 client editions."
+    }
+    if ($info.Build -lt 19041) {
+        $reason += "WSL Manager Pro requires Windows 10 version 2004 or newer (build 19041+) or Windows 11."
+    }
+    if ($reason.Count -eq 0) {
+        $reason += "This Windows version is not supported by the installer."
+    }
+
+    Write-Host ""
+    Write-Host "Windows is not compatible with this WSL setup." -ForegroundColor Red
+    foreach ($line in $reason) {
+        Write-Host ("- " + $line) -ForegroundColor Red
+    }
+    Write-Host ""
+    Write-Host "No system changes were made. Please update Windows and run the installer again." -ForegroundColor Yellow
+    Read-Host -Prompt "Press Enter to close this window"
+    exit 1
+}
+
+function Resolve-WslExe {
+<#
+.SYNOPSIS
+    Resolve wsl.exe using System32/SysNative before falling back to PATH.
+#>
+    $systemRoot = if ($env:SystemRoot) { $env:SystemRoot } else { "C:\Windows" }
+    $candidates = @(
+        (Join-Path $systemRoot "System32\wsl.exe"),
+        (Join-Path $systemRoot "SysNative\wsl.exe")
+    )
+    foreach ($candidate in $candidates) {
+        if (Test-Path $candidate) {
+            return $candidate
+        }
+    }
+    $cmd = Get-Command "wsl.exe" -ErrorAction SilentlyContinue
+    if ($null -ne $cmd -and -not [string]::IsNullOrWhiteSpace($cmd.Source)) {
+        return $cmd.Source
+    }
+    return $null
+}
+
+function Invoke-WslCommand {
+<#
+.SYNOPSIS
+    Invoke wsl.exe only after resolving its absolute path.
+#>
+    param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Arguments)
+    $wslExe = Resolve-WslExe
+    if ([string]::IsNullOrWhiteSpace($wslExe)) {
+        return 9009
+    }
+    & $wslExe @Arguments
+    return $LASTEXITCODE
+}
+
+function Enable-WindowsFeatureIfNeeded {
+<#
+.SYNOPSIS
+    Enable a Windows optional feature and report whether reboot is needed.
+#>
+    param(
+        [Parameter(Mandatory = $true)][string]$FeatureName,
+        [Parameter(Mandatory = $true)][string]$Label
+    )
+    Write-Step "Checking Windows feature: $Label"
+    try {
+        $feature = Get-WindowsOptionalFeature -Online -FeatureName $FeatureName
+        if ($feature.State -eq "Enabled") {
+            Write-Ok "$Label is already enabled."
+            return $false
+        }
+        if ($feature.State -eq "EnablePending") {
+            Write-Warn "$Label is already pending enablement; restart required."
+            return $true
+        }
+    } catch {
+        Write-Warn "Could not query $Label through WindowsOptionalFeature; DISM will attempt enablement."
+    }
+
+    Write-Step "Enabling $Label..."
+    dism.exe /online /enable-feature /featurename:$FeatureName /all /norestart | Out-Null
+    $code = $LASTEXITCODE
+    if ($code -eq 3010) {
+        Write-Warn "$Label enabled; Windows reports that a restart is required."
+        return $true
+    }
+    if ($code -ne 0) {
+        throw "DISM failed while enabling $Label (exit code $code)."
+    }
+    try {
+        $feature = Get-WindowsOptionalFeature -Online -FeatureName $FeatureName
+        if ($feature.State -eq "EnablePending") {
+            Write-Warn "$Label is pending enablement; restart required."
+            return $true
+        }
+    } catch {
+        # If verification cannot run, keep going; later WSL checks will decide.
+    }
+    Write-Ok "$Label enabled."
+    return $false
 }
 
 function Assert-LocalScriptInvocation {
@@ -360,28 +526,50 @@ function Enable-WslFeatures {
 #>
     Write-Section "WSL Preparation"
 
-    Write-Step "Enabling required Windows features for WSL..."
-    # Enable WSL subsystem and Hyper-V / Virtual Machine Platform
-    dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart | Out-Null
-    dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart | Out-Null
-    Write-Ok "Required Windows features were processed."
+    $script:WslRestartRequired = $false
 
-    if (-not (Test-Command "wsl.exe")) {
-        Write-Step "Installing WSL base components..."
-        wsl --install --no-distribution
-        if ($LASTEXITCODE -ne 0) {
-            Write-Warn "WSL installation returned a non-zero exit code. A restart may be required."
-        }
+    $needsRestart = Enable-WindowsFeatureIfNeeded `
+        -FeatureName "Microsoft-Windows-Subsystem-Linux" `
+        -Label "Windows Subsystem for Linux"
+    if ($needsRestart) { $script:WslRestartRequired = $true }
+
+    $needsRestart = Enable-WindowsFeatureIfNeeded `
+        -FeatureName "VirtualMachinePlatform" `
+        -Label "Virtual Machine Platform"
+    if ($needsRestart) { $script:WslRestartRequired = $true }
+
+    $wslExe = Resolve-WslExe
+    if ([string]::IsNullOrWhiteSpace($wslExe)) {
+        Write-Warn "wsl.exe is not available yet."
+        Write-Warn "Windows likely needs a restart before WSL commands can be used."
+        $script:WslRestartRequired = $true
+        return
+    }
+    Write-Ok "wsl.exe found at: $wslExe"
+
+    Write-Step "Installing or refreshing WSL base components..."
+    $installCode = Invoke-WslCommand "--install" "--no-distribution"
+    if ($installCode -eq 0) {
+        Write-Ok "WSL base components are installed."
+    } elseif ($installCode -eq 3010) {
+        Write-Warn "WSL install completed but Windows reports that a restart is required."
+        $script:WslRestartRequired = $true
     } else {
-        Write-Ok "wsl.exe is available."
+        Write-Warn "WSL install command returned exit code $installCode. This can happen when WSL is already installed or when a restart is pending."
+    }
+
+    if ($script:WslRestartRequired) {
+        Write-Warn "Skipping WSL default-version configuration until after restart."
+        return
     }
 
     Write-Step "Setting default WSL version to 2..."
-    wsl --set-default-version 2 2>$null
-    if ($LASTEXITCODE -eq 0) {
+    $versionCode = Invoke-WslCommand "--set-default-version" "2"
+    if ($versionCode -eq 0) {
         Write-Ok "Default WSL version set to 2."
     } else {
         Write-Warn "Could not set default WSL version now. Run 'wsl --set-default-version 2' after reboot."
+        $script:WslRestartRequired = $true
     }
 }
 
@@ -505,8 +693,12 @@ function Test-Environment {
     Write-Ok "Python dependencies verified."
 
     Write-Step "Checking WSL command availability..."
-    wsl --status 2>$null | Out-Null
-    if ($LASTEXITCODE -eq 0) {
+    if ($script:WslRestartRequired) {
+        Write-Warn "WSL verification is pending because Windows must restart first."
+        return
+    }
+    $statusCode = Invoke-WslCommand "--status"
+    if ($statusCode -eq 0) {
         Write-Ok "WSL is accessible."
     } else {
         Write-Warn "WSL status check did not pass. A reboot may still be required."
@@ -523,19 +715,22 @@ Write-Host "This script installs and configures all required runtime dependencie
 # Phase 0: assert local script invocation context
 Assert-LocalScriptInvocation
 
-# Phase 1: assert administrator privileges (elevate if needed)
+# Phase 1: verify Windows compatibility before making system changes
+Assert-WindowsSupportsWsl
+
+# Phase 2: assert administrator privileges (elevate if needed)
 Assert-Administrator
 
-# Phase 2: enable WSL features and install WSL base components
+# Phase 3: enable WSL features and install WSL base components
 Enable-WslFeatures
 
-# Phase 3: install Python 3.12 via winget
+# Phase 4: install Python 3.12 via winget
 Install-Tooling
 
-# Phase 4: create venv and install project dependencies
+# Phase 5: create venv and install project dependencies
 Install-ProjectDependencies
 
-# Phase 5: verify everything is wired correctly
+# Phase 6: verify everything is wired correctly
 Test-Environment
 
 # ---------------------------------------------------------------------------
@@ -550,6 +745,12 @@ Write-Host "     .\.venv\Scripts\python.exe .\main.py" -ForegroundColor White
 Write-Host ""
 Write-Host "  2. If WSL was just enabled for the first time," -ForegroundColor Gray
 Write-Host "     restart Windows to finalize kernel and feature activation." -ForegroundColor DarkYellow
+if ($script:WslRestartRequired) {
+    Write-Host ""
+    Write-Host "Important:" -ForegroundColor Yellow
+    Write-Host "  Windows must be restarted before WSL can be fully configured." -ForegroundColor Yellow
+    Write-Host "  After restarting, run this installer again to finish WSL verification." -ForegroundColor Yellow
+}
 
 # Keep the console open so the user can review the output
 Write-Host ""

@@ -10,6 +10,8 @@ Covers:
 from __future__ import annotations
 
 import hashlib
+import tarfile
+import zipfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -96,3 +98,23 @@ def test_download_http_error_raises(tmp_path: Path) -> None:
         dm = DownloadManager()
         with pytest.raises(DownloadError, match="HTTP 500"):
             dm.download("http://example.test/bad", str(tmp_path / "x.bin"))
+
+
+def test_extract_appx_rejects_zip_path_traversal(tmp_path: Path) -> None:
+    appx = tmp_path / "bad.appx"
+    with zipfile.ZipFile(appx, "w") as zf:
+        zf.writestr("../evil.txt", "owned")
+
+    with pytest.raises(DownloadError, match="Unsafe ZIP member path"):
+        DownloadManager.extract_appx(str(appx), str(tmp_path / "out"))
+
+
+def test_extract_arch_bootstrap_rejects_tar_path_traversal(tmp_path: Path) -> None:
+    archive = tmp_path / "bad.tar"
+    payload = tmp_path / "payload.txt"
+    payload.write_text("owned", encoding="utf-8")
+    with tarfile.open(archive, "w") as tf:
+        tf.add(payload, arcname="../evil.txt")
+
+    with pytest.raises(DownloadError, match="Unsafe TAR member path"):
+        DownloadManager.extract_arch_bootstrap(str(archive), str(tmp_path / "rootfs.tar.gz"))

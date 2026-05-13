@@ -25,7 +25,7 @@ online catalogue or from a downloaded rootfs, import/export, post-install
 provisioning (user account, packages, `wsl.conf`), resource limits via
 `.wslconfig`, and maintenance utilities.
 
-**Application version:** 1.0.0
+**Application version:** 1.0.1
 
 ---
 
@@ -101,14 +101,18 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://r
 > 2. **Downloads the repository as ZIP** — The bootstrap script downloads the entire
 >    WSL Manager Pro source tree as a ZIP archive (no Git required), extracts it,
 >    and copies the files to `%USERPROFILE%\Desktop\WSL-Manager-Pro`.
-> 3. **Verifies critical files** — Checks that `install.ps1` and `distros.json`
+> 3. **Verifies Windows compatibility** — Stops before making changes on
+>    unsupported Windows builds and explains the minimum requirement.
+> 4. **Verifies critical files** — Checks that `install.ps1` and `distros.json`
 >    are present and intact before proceeding. If anything is missing, the script
 >    halts with a clear error message.
-> 4. **Delegates to `install.ps1`** — The verified local copy of the full
+> 5. **Delegates to `install.ps1`** — The verified local copy of the full
 >    environment installer takes over and runs the complete setup pipeline:
 >    enables WSL Windows features, installs Python 3.12 via winget,
 >    creates a `.venv` virtual environment, and installs all project dependencies.
-> 5. **Ready to launch** — When the process completes, the application is fully
+> 6. **Handles WSL reboot requirements** — On fresh Windows installs, WSL
+>    commands are skipped safely when Windows reports that a restart is required.
+> 7. **Ready to launch** — When the process completes, the application is fully
 >    configured and can be started with `.\.venv\Scripts\python.exe .\main.py` from the target directory.
 >
 > **Requirements:** Administrator privileges (the script will auto-elevate via
@@ -182,7 +186,7 @@ WSL Manager Pro/
 ·
 +-- resources/                  # Bundled assets
 ·   +-- i18n/
-·   ·   +-- en.json             # English translations (500+ keys)
+·   ·   +-- en.json             # English translations (300+ keys)
 ·   ·   +-- es.json             # Spanish translations
 ·   ·   +-- pt.json             # Portuguese (Brazilian) translations
 ·   +-- styles/
@@ -192,7 +196,7 @@ WSL Manager Pro/
 ·   +-- icon.ico
 ·   +-- icon.png
 ·
-+-- tests/                      # Unit tests (32 tests, no WSL required)
++-- tests/                      # Unit tests (42 tests, no WSL required)
 ·   +-- __init__.py
 ·   +-- test_app_logging.py
 ·   +-- test_catalog_loader.py
@@ -429,6 +433,7 @@ Oracle Linux 9.5.
 | `remote_catalog_url` | `""` | Optional remote catalogue URL |
 | `run_as_admin` | `true` | Whether to prompt for elevation on startup |
 | `check_for_updates` | `false` | Check for updates on startup (GitHub releases) |
+| `update_repo_url` | `https://github.com/wilkinbarban/WSL-Manager-Pro/releases` | GitHub Releases URL used for update checks |
 | `memory_limit_gb` | `4` | WSL 2 VM memory limit (1---256 GB) |
 | `swap_size_gb` | `2` | WSL 2 swap space (0---128 GB) |
 | `processors` | `2` | Logical CPU cores for WSL 2 (1---256) |

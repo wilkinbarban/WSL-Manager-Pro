@@ -44,6 +44,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from utils.i18n import SUPPORTED_LANGUAGES
+from utils.update_checker import DEFAULT_UPDATE_REPO_URL
 
 #: Current config schema version.  Increment when adding required fields or
 #: changing the structure of existing fields.
@@ -109,7 +110,7 @@ class AppConfig:
     remote_catalog_url: str = ""
     run_as_admin: bool = True
     check_for_updates: bool = False
-    update_repo_url: str = ""
+    update_repo_url: str = DEFAULT_UPDATE_REPO_URL
     memory_limit_gb: int = 4
     swap_size_gb: int = 2
     processors: int = 2
@@ -148,7 +149,7 @@ def migrate_v1_to_v2(raw: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
     migrated.setdefault("remote_catalog_url", "")
     migrated.setdefault("run_as_admin", True)
     migrated.setdefault("check_for_updates", False)
-    migrated.setdefault("update_repo_url", "")
+    migrated.setdefault("update_repo_url", DEFAULT_UPDATE_REPO_URL)
     migrated.setdefault("localhost_forwarding", True)
     migrated.setdefault("vm_idle_timeout_sec", 60)
     return migrated, infos
@@ -231,7 +232,10 @@ def _validate_download_state(data: Any, key: str) -> DownloadState:
         checksum=_validate_optional_string(
             payload.get("checksum"), f"download_states[{key!r}].checksum"
         ),
-        completed=bool(payload.get("completed", False)),
+        completed=_validate_bool(
+            payload.get("completed", False),
+            f"download_states[{key!r}].completed",
+        ),
     )
 
 

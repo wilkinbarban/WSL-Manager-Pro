@@ -13,7 +13,7 @@ desde el catálogo en línea o desde un rootfs descargado, importar/exportar,
 aprovisionamiento post-instalación (cuenta de usuario, paquetes, `wsl.conf`),
 límites de recursos mediante `.wslconfig` y utilidades de mantenimiento.
 
-**Versión de la aplicación:** 1.0.0
+**Versión de la aplicación:** 1.0.1
 
 ---
 
@@ -89,14 +89,18 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://r
 > 2. **Descarga el repositorio como ZIP** — El script de arranque descarga todo el
 >    código fuente de WSL Manager Pro como un archivo ZIP (no requiere Git), lo
 >    extrae y copia los archivos a `%USERPROFILE%\Desktop\WSL-Manager-Pro`.
-> 3. **Verifica archivos críticos** — Comprueba que `install.ps1` y `distros.json`
+> 3. **Verifica compatibilidad de Windows** — Se detiene antes de realizar
+>    cambios en builds no soportadas y explica el requisito mínimo.
+> 4. **Verifica archivos críticos** — Comprueba que `install.ps1` y `distros.json`
 >    estén presentes e intactos antes de continuar. Si algo falta, el script se
 >    detiene con un mensaje de error claro.
-> 4. **Delega en `install.ps1`** — La copia local verificada del instalador
+> 5. **Delega en `install.ps1`** — La copia local verificada del instalador
 >    completo de entorno toma el control y ejecuta la configuración completa:
 >    habilita características WSL de Windows, instala Python 3.12 mediante winget,
 >    crea un entorno virtual `.venv` e instala todas las dependencias del proyecto.
-> 5. **Listo para ejecutar** — Cuando el proceso termina, la aplicación está
+> 6. **Gestiona reinicios requeridos por WSL** — En instalaciones limpias de
+>    Windows, omite de forma segura comandos WSL cuando el sistema requiere reinicio.
+> 7. **Listo para ejecutar** — Cuando el proceso termina, la aplicación está
 >    completamente configurada y puede iniciarse con `.\.venv\Scripts\python.exe .\main.py`
 >    desde el directorio de destino.
 >
@@ -171,7 +175,7 @@ WSL Manager Pro/
 │
 ├── resources/                  # Activos empaquetados
 │   ├── i18n/
-│   │   ├── en.json             # Traducciones al inglés (500+ claves)
+│   │   ├── en.json             # Traducciones al inglés (300+ claves)
 │   │   ├── es.json             # Traducciones al español
 │   │   └── pt.json             # Traducciones al portugués (brasileño)
 │   └── styles/
@@ -181,7 +185,7 @@ WSL Manager Pro/
 │   ├── icon.ico
 │   └── icon.png
 │
-├── tests/                      # Pruebas unitarias (32 tests, no requieren WSL)
+├── tests/                      # Pruebas unitarias (42 tests, no requieren WSL)
 │   ├── __init__.py
 │   ├── test_app_logging.py
 │   ├── test_catalog_loader.py
@@ -421,6 +425,7 @@ Oracle Linux 9.5.
 | `remote_catalog_url` | `""` | URL opcional de catálogo remoto |
 | `run_as_admin` | `true` | Solicitar elevación al iniciar |
 | `check_for_updates` | `false` | Verificar actualizaciones al iniciar (GitHub releases) |
+| `update_repo_url` | `https://github.com/wilkinbarban/WSL-Manager-Pro/releases` | URL de GitHub Releases usada para comprobar actualizaciones |
 | `memory_limit_gb` | `4` | Límite de memoria VM WSL 2 (1–256 GB) |
 | `swap_size_gb` | `2` | Espacio swap WSL 2 (0–128 GB) |
 | `processors` | `2` | Núcleos CPU lógicos para WSL 2 (1–256) |
@@ -634,7 +639,7 @@ pip install -e ".[dev]"
 pytest tests/ -q
 ```
 
-Los **32 tests pasan** sin requerir `wsl.exe` — los parsers son funciones
+Los **42 tests pasan** sin requerir `wsl.exe` — los parsers son funciones
 puras y los tests del downloader/engine usan mocks.
 
 ### Linting

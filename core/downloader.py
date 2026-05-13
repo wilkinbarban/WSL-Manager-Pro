@@ -67,6 +67,38 @@ class ChecksumMismatch(ValueError):
 ProgressCallback = Callable[[int, int], None]   # (bytes_done, total_bytes)
 
 
+def _is_relative_to(path: Path, base: Path) -> bool:
+    try:
+        path.relative_to(base)
+        return True
+    except ValueError:
+        return False
+
+
+def _safe_extract_zip(zip_file, output_dir: str) -> None:
+    """Extract a ZIP archive without allowing members to escape output_dir."""
+    dest_root = Path(output_dir).resolve()
+    for member in zip_file.infolist():
+        target = (dest_root / member.filename).resolve()
+        if not _is_relative_to(target, dest_root):
+            raise DownloadError(f"Unsafe ZIP member path: {member.filename}")
+    zip_file.extractall(output_dir)
+
+
+def _safe_extract_tar(tar_file, output_dir: str) -> None:
+    """Extract a TAR archive without allowing path traversal."""
+    dest_root = Path(output_dir).resolve()
+    for member in tar_file.getmembers():
+        target = (dest_root / member.name).resolve()
+        if not _is_relative_to(target, dest_root):
+            raise DownloadError(f"Unsafe TAR member path: {member.name}")
+        if member.islnk():
+            link_target = (dest_root / member.linkname).resolve()
+            if not _is_relative_to(link_target, dest_root):
+                raise DownloadError(f"Unsafe TAR hardlink target: {member.name}")
+    tar_file.extractall(output_dir)
+
+
 class DownloadManager:
     """
     Download a single file with optional resume and integrity verification.
@@ -284,7 +316,7 @@ class DownloadManager:
 
         Path(output_dir).mkdir(parents=True, exist_ok=True)
         with zipfile.ZipFile(appx_path, "r") as zf:
-            zf.extractall(output_dir)
+            _safe_extract_zip(zf, output_dir)
 
         # Search for known rootfs archive names (fast path)
         for name in ("install.tar.gz", "rootfs.tar.gz", "install.tar"):
@@ -353,10 +385,10 @@ class DownloadManager:
                     with inner_tar.open("wb") as fh_out:
                         dctx.copy_stream(fh_in, fh_out)
                 with tarfile.open(str(inner_tar), "r:") as tf:
-                    tf.extractall(tmpdir)
+                    _safe_extract_tar(tf, tmpdir)
             else:
                 with tarfile.open(archive_path, "r:*") as tf:
-                    tf.extractall(tmpdir)
+                    _safe_extract_tar(tf, tmpdir)
 
             # Stage 2: locate the root.*/ directory inside the extracted tree
             root_dir: Optional[Path] = None

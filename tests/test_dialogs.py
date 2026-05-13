@@ -9,6 +9,7 @@ Covers:
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import pytest
 
@@ -31,3 +32,11 @@ def test_user_creation_dialog_retranslate_does_not_crash() -> None:
     dialog = UserCreationDialog()
     dialog.retranslate_ui()
     assert dialog.windowTitle()
+
+
+def test_deep_clean_rejects_dangerous_directories(tmp_path) -> None:
+    from ui.main_window import MainWindow
+
+    assert MainWindow._unsafe_cleanup_dir_reason(Path.home())
+    assert MainWindow._unsafe_cleanup_dir_reason(Path.cwd())
+    assert not MainWindow._unsafe_cleanup_dir_reason(tmp_path / "cache")

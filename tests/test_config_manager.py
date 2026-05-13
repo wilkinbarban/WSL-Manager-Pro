@@ -21,6 +21,7 @@ from utils.config_manager import (
     ConfigManager,
     ConfigValidationError,
 )
+from utils.update_checker import DEFAULT_UPDATE_REPO_URL
 
 
 def test_config_manager_defaults_when_file_missing(tmp_path: Path) -> None:
@@ -57,7 +58,7 @@ def test_config_manager_migrates_v1_to_v2(tmp_path: Path) -> None:
     assert mgr.config.remote_catalog_url == ""
     assert mgr.config.run_as_admin is True
     assert mgr.config.check_for_updates is False
-    assert mgr.config.update_repo_url == ""
+    assert mgr.config.update_repo_url == DEFAULT_UPDATE_REPO_URL
     assert mgr.config.localhost_forwarding is True
     assert mgr.config.vm_idle_timeout_sec == 60
     assert any("schema v1" in info for info in mgr.startup_infos)
@@ -126,7 +127,7 @@ def test_config_manager_invalid_values_fallback_and_skip_bad_entries(tmp_path: P
     assert mgr.config.remote_catalog_url == ""
     assert mgr.config.run_as_admin is True
     assert mgr.config.check_for_updates is False
-    assert mgr.config.update_repo_url == ""
+    assert mgr.config.update_repo_url == AppConfig().update_repo_url
     assert mgr.config.memory_limit_gb == AppConfig().memory_limit_gb
     assert mgr.config.swap_size_gb == AppConfig().swap_size_gb
     assert mgr.config.processors == AppConfig().processors
@@ -147,3 +148,26 @@ def test_config_manager_save_rejects_invalid_data(tmp_path: Path) -> None:
     with pytest.raises(ConfigValidationError):
         mgr.save()
     assert not cfg_path.exists()
+
+
+def test_config_manager_rejects_non_boolean_download_completed(tmp_path: Path) -> None:
+    cfg_path = tmp_path / "config.json"
+    cfg_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 2,
+                "download_states": {
+                    "https://bad.test/rootfs.tar.gz": {
+                        "url": "https://bad.test/rootfs.tar.gz",
+                        "dest_path": r"C:\cache\rootfs.tar.gz",
+                        "completed": "false",
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    mgr = ConfigManager(path=cfg_path)
+    assert mgr.config.download_states == {}
+    assert any(".completed" in warning for warning in mgr.startup_warnings)

@@ -312,7 +312,9 @@ class SettingsTab(QWidget):
         self.run_as_admin_check.setText(t("Run with administrator privileges when possible"))
         self.check_for_updates_check.setText(t("Check for updates on startup (optional)"))
         self.lbl_update_repo.setText(t("GitHub repository URL for updates (optional):"))
-        self.update_repo_url_edit.setPlaceholderText("https://github.com/owner/repo")
+        self.update_repo_url_edit.setPlaceholderText(
+            "https://github.com/wilkinbarban/WSL-Manager-Pro/releases"
+        )
         self.wsl_group.setTitle(t("WSL2 Resource Limits  (.wslconfig)"))
         self.lbl_memory.setText(t("Memory:"))
         self.lbl_swap.setText(t("Swap:"))

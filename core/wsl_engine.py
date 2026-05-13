@@ -285,7 +285,11 @@ class WslEngine:
             )
         return result.returncode, stdout, stderr
 
-    def _popen_stream(self, args: list[str]) -> Generator[str, None, None]:
+    def _popen_stream(
+        self,
+        args: list[str],
+        env_overrides: Optional[dict[str, str]] = None,
+    ) -> Generator[str, None, None]:
         """Open a ``wsl.exe`` subprocess and yield decoded stdout lines in real time.
 
         stderr is merged into stdout (``STDOUT``) so callers receive all
@@ -300,11 +304,16 @@ class WslEngine:
             ``\\r\\n`` stripped.
         """
         cmd = [self._wsl_exe] + [str(a) for a in args]
+        env = None
+        if env_overrides:
+            env = os.environ.copy()
+            env.update(env_overrides)
         with subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             creationflags=_NO_WINDOW_FLAG,
+            env=env,
         ) as proc:
             assert proc.stdout is not None
             for raw_line in iter(proc.stdout.readline, b""):
@@ -610,7 +619,12 @@ class WslEngine:
         """
         yield from self._popen_stream(["-d", distro, "--", "bash", "-c", command])
 
-    def run_command_as_root(self, distro: str, command: str) -> Generator[str, None, None]:
+    def run_command_as_root(
+        self,
+        distro: str,
+        command: str,
+        env_overrides: Optional[dict[str, str]] = None,
+    ) -> Generator[str, None, None]:
         """Same as :meth:`run_command` but executes as root (uid 0).
 
         Uses ``wsl -u root`` to elevate privileges inside the distro.
@@ -624,7 +638,10 @@ class WslEngine:
         Yields:
             Decoded stdout/stderr lines, one per iteration.
         """
-        yield from self._popen_stream(["-d", distro, "-u", "root", "--", "bash", "-c", command])
+        yield from self._popen_stream(
+            ["-d", distro, "-u", "root", "--", "bash", "-c", command],
+            env_overrides=env_overrides,
+        )
 
     # =========================================================================
     # Windows tool integration
@@ -778,7 +795,7 @@ class WslEngine:
             swap=4GB
             processors=4
             localhostForwarding=true
-            vmIdleTimeout=60
+            vmIdleTimeout=60000
 
         Args:
             memory_gb: Maximum RAM for the WSL 2 VM (1–256 GB).
@@ -786,7 +803,7 @@ class WslEngine:
             processors: Logical CPU cores available to WSL 2 (1–256).
             localhost_forwarding: Enable ``localhost`` port forwarding from
                 Windows to WSL 2.
-            vm_idle_timeout: Milliseconds of inactivity before the WSL 2 VM
+            vm_idle_timeout: Seconds of inactivity before the WSL 2 VM
                 shuts down automatically.
 
         Returns:
@@ -798,7 +815,7 @@ class WslEngine:
             f"swap={swap_gb}GB\n"
             f"processors={processors}\n"
             f"localhostForwarding={'true' if localhost_forwarding else 'false'}\n"
-            f"vmIdleTimeout={vm_idle_timeout}\n"
+            f"vmIdleTimeout={vm_idle_timeout * 1000}\n"
         )
 
     def generate_wslconfig(
@@ -964,7 +981,7 @@ class WslEngine:
             # Write password via temp-file to keep it off the process list
             set_password_cmd = (
                 f"_tmpf=$(mktemp) "
-                f"&& printf '%s\\n' {shlex.quote(username + ':' + password)} > \"$_tmpf\" "
+                f"&& printf '%s:%s\\n' {safe_user} \"$WSL_MANAGER_INITIAL_PASS\" > \"$_tmpf\" "
                 f"&& chpasswd < \"$_tmpf\" "
                 f"&& rm -f \"$_tmpf\""
             )
@@ -1048,9 +1065,10 @@ class WslEngine:
             run_system_update=run_system_update,
             enable_systemd=enable_systemd,
         )
+        secret_env = {"WSL_MANAGER_INITIAL_PASS": password} if username else None
         for label, cmd in steps:
             yield f"\n>>> {label}..."
-            yield from self.run_command_as_root(distro_name, cmd)
+            yield from self.run_command_as_root(distro_name, cmd, env_overrides=secret_env)
         yield "\n>>> Post-installation complete."
 
     def validate_user_home_start(self, distro_name: str, username: str) -> tuple[int, str, str]:

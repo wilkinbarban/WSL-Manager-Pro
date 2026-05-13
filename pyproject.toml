@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wsl-manager-pro"
-version = "1.0.0"
+version = "1.0.1"
 description = "Desktop manager for Windows Subsystem for Linux (WSL)"
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -35,10 +35,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/username/wsl-manager-pro"
-Repository = "https://github.com/username/wsl-manager-pro"
-Documentation = "https://github.com/username/wsl-manager-pro/blob/main/REDME.md"
-"Issue Tracker" = "https://github.com/username/wsl-manager-pro/issues"
+Homepage = "https://github.com/wilkinbarban/WSL-Manager-Pro/"
+Repository = "https://github.com/wilkinbarban/WSL-Manager-Pro/"
+Documentation = "https://github.com/wilkinbarban/WSL-Manager-Pro/blob/master/README.md"
 
 [project.optional-dependencies]
 dev = [
