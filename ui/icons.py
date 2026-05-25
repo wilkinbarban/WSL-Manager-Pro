@@ -74,8 +74,8 @@ def get_icon(name: str) -> QIcon:
         :class:`KeyError` is raised on the first access.
     """
     if name not in _icons:
-        _icons["running"] = circle_icon("#4CAF50")
-        _icons["stopped"] = circle_icon("#9E9E9E")
-        _icons["installing"] = circle_icon("#FF9800")
-        _icons["default"] = circle_icon("#2196F3")
+        _icons["running"] = circle_icon("#00e676")
+        _icons["stopped"] = circle_icon("#475569")
+        _icons["installing"] = circle_icon("#ffb300")
+        _icons["default"] = circle_icon("#00f0ff")
     return _icons[name]

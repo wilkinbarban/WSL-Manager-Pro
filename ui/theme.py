@@ -24,28 +24,28 @@ Colour reference
 from __future__ import annotations
 
 #: Main text colour used for log console and general labels.
-COLOR_TEXT: str = "#d4d4d4"
+COLOR_TEXT: str = "#e2e8f0"
 
 #: Secondary / muted text for less important information.
-COLOR_MUTED: str = "#888888"
+COLOR_MUTED: str = "#64748b"
 
 #: Colour for informational log messages (light blue).
-COLOR_INFO: str = "#64B5F6"
+COLOR_INFO: str = "#38bdf8"
 
 #: Colour for success messages and positive indicators (green).
-COLOR_SUCCESS: str = "#4CAF50"
+COLOR_SUCCESS: str = "#00e676"
 
 #: Colour for warning messages (orange).
-COLOR_WARNING: str = "#FFA500"
+COLOR_WARNING: str = "#ffb300"
 
 #: Colour for error messages and critical indicators (red).
-COLOR_ERROR: str = "#F44336"
+COLOR_ERROR: str = "#ff1744"
 
 #: Accent / highlight colour used for emphasis (amber/yellow).
-COLOR_ACCENT: str = "#FFC107"
+COLOR_ACCENT: str = "#00f0ff"
 
 #: Colour used to represent a stopped / inactive distro state (grey).
-COLOR_STOPPED: str = "#9E9E9E"
+COLOR_STOPPED: str = "#475569"
 
 #: Dark panel background colour for card-style containers.
-COLOR_BG_PANEL: str = "#252526"
+COLOR_BG_PANEL: str = "#12141c"

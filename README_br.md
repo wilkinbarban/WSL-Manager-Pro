@@ -1,8 +1,8 @@
-﻿# WSL Manager Pro
+# WSL Manager Pro
 
 [![CI](https://github.com/wilkinbarban/WSL-Manager-Pro/actions/workflows/ci.yml/badge.svg)](https://github.com/wilkinbarban/WSL-Manager-Pro/actions/workflows/ci.yml)
 [![Licença: GPL v3](https://img.shields.io/badge/Licença-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.14+](https://img.shields.io/badge/python-3.14+-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-green.svg)](https://pypi.org/project/PySide6/)
 
 > 📖 Também disponível em: [English](README.md) · [Español](README_es.md)
@@ -53,7 +53,7 @@ limites de recursos por meio de `.wslconfig` e utilitários de manutenção.
 | **Sistema Operacional** | Windows 10 build 19041+ (suporte a WSL 2) |
 | **WSL** | `wsl.exe` acessível em `%SystemRoot%\System32\wsl.exe` |
 | **PowerShell** | `pwsh.exe` (PS 7+) ou `powershell.exe` (PS 5.1) no PATH |
-| **Python** | 3.10 ou superior (usa anotações de tipo modernas: `list[str]`, `dict[str, str]`) |
+| **Python** | 3.14 ou superior (usa anotações de tipo modernas: `list[str]`, `dict[str, str]`) |
 | **Permissões** | Privilégios de Administrador são recomendados para operações WSL e winget. O aplicativo suporta modo limitado (somente leitura) se o usuário recusar a elevação. |
 
 ---
@@ -62,7 +62,7 @@ limites de recursos por meio de `.wslconfig` e utilitários de manutenção.
 
 | Área | Tecnologia |
 |------|------------|
-| Linguagem | **Python 3.10+** |
+| Linguagem | **Python 3.14+** |
 | Interface gráfica | **PySide6** (bindings oficiais do Qt 6 para widgets) |
 | Concorrência de UI | **QThread** + sinais/slots do Qt |
 | Cliente HTTP | **requests** (downloads com streaming, retentativas e suporte a Range) |
@@ -75,38 +75,32 @@ limites de recursos por meio de `.wslconfig` e utilitários de manutenção.
 
 ## Início Rápido
 
-### Instalação com um único comando (PowerShell)
+### Instalação e Execução com um Único Comando (PowerShell)
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install_secure.ps1 | iex
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install.ps1 | iex
 ```
+
+### Execução Local Rápida (`Iniciar.bat`)
+
+Se você já clonou o repositório ou baixou o arquivo ZIP em uma pasta local, pode instalar as dependências e iniciar o aplicativo apenas dando um duplo clique no arquivo inicializador na pasta raiz:
+
+```cmd
+Iniciar.bat
+```
+
+> **Nota**: Este é um script híbrido Batch/PowerShell. Ele detectará automaticamente o Python 3.14 ou superior, inicializará o ambiente virtual `.venv` se necessário, instalará ou atualizará todos os requisitos e iniciará a interface gráfica imediatamente sem comandos manuais.
 
 > **O que esse comando faz — passo a passo:**
 >
-> 1. **Baixa `install_secure.ps1`** — Um script de bootstrap leve (~6 KB),
->    obtido diretamente da branch `master` do repositório por meio do serviço
->    de conteúdo raw do GitHub.
-> 2. **Baixa o repositório como ZIP** — O script de bootstrap baixa todo o
->    código-fonte do WSL Manager Pro como arquivo ZIP (não requer Git),
->    extrai e copia os arquivos para `%USERPROFILE%\Desktop\WSL-Manager-Pro`.
-> 3. **Verifica a compatibilidade do Windows** — Interrompe antes de fazer
->    alterações em builds não suportadas e explica o requisito mínimo.
-> 4. **Verifica arquivos críticos** — Confere se `install.ps1` e `distros.json`
->    estão presentes e íntegros antes de continuar. Se algo faltar, o script
->    é interrompido com uma mensagem de erro clara.
-> 5. **Delega para `install.ps1`** — A cópia local verificada do instalador
->    completo de ambiente assume o controle e executa a configuração completa:
->    habilita recursos WSL do Windows, instala Python 3.12 via winget,
->    cria um ambiente virtual `.venv` e instala todas as dependências do projeto.
-> 6. **Gerencia reinícios exigidos pelo WSL** — Em instalações limpas do
->    Windows, ignora comandos WSL com segurança quando o sistema exige reinício.
-> 7. **Pronto para executar** — Quando o processo termina, o aplicativo fica
->    totalmente configurado e pode ser iniciado com `.\.venv\Scripts\python.exe .\main.py`
->    a partir do diretório de destino.
+> 1. **Baixa e executa `install.ps1`** — Um script instalador de comando único obtido diretamente da branch `master` do repositório por meio do serviço de conteúdo raw do GitHub.
+> 2. **Inicializa o repositório** — Se for executado em um diretório vazio, ele baixa automaticamente o código-fonte completo do WSL Manager Pro como arquivo ZIP (sem necessidade de Git), extrai os arquivos e os coloca em `%USERPROFILE%\Desktop\WSL-Manager-Pro`.
+> 3. **Verifica o ambiente Python** — Detecta uma instalação compatível do Python (>=3.14). Caso falte, instala automaticamente o Python 3.14 usando o `winget` e atualiza o PATH do sistema.
+> 4. **Prepara o ambiente virtual** — Cria ou recria automaticamente um ambiente virtual isolado `.venv` utilizando o Python local.
+> 5. **Instala as dependências do projeto** — Atualiza o `pip` e instala silenciosamente todos os pacotes requeridos definidos no `requirements.txt` com um indicador de progresso interativo.
+> 6. **Inicia o aplicativo** — Assim que todas as dependências forem verificadas, o script inicia o WSL Manager Pro automaticamente.
 >
-> **Requisitos:** Privilégios de Administrador (o script se autoeleva via
-> aviso UAC) e `winget` deve estar disponível (incluído com App Installer no Windows 10/11).
-> **Git não é necessário.**
+> **Requisitos:** Windows 10/11. Não é necessária a instalação do Git. As dependências são configuradas no espaço de usuário, embora o próprio aplicativo possa solicitar privilégios de administrador por meio da interface gráfica se for necessário ativar recursos do WSL durante o uso.
 
 ### Instalação Manual (alternativa clássica)
 

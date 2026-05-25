@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/wilkinbarban/WSL-Manager-Pro/actions/workflows/ci.yml/badge.svg)](https://github.com/wilkinbarban/WSL-Manager-Pro/actions/workflows/ci.yml)
 [![Licencia: GPL v3](https://img.shields.io/badge/Licencia-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.14+](https://img.shields.io/badge/python-3.14+-blue.svg)](https://www.python.org/downloads/)
 [![PySide6](https://img.shields.io/badge/GUI-PySide6-green.svg)](https://pypi.org/project/PySide6/)
 
 > 📖 También disponible en: [English](README.md) · [Português](README_br.md)
@@ -53,7 +53,7 @@ límites de recursos mediante `.wslconfig` y utilidades de mantenimiento.
 | **Sistema Operativo** | Windows 10 build 19041+ (soporte WSL 2) |
 | **WSL** | `wsl.exe` accesible en `%SystemRoot%\System32\wsl.exe` |
 | **PowerShell** | `pwsh.exe` (PS 7+) o `powershell.exe` (PS 5.1) en PATH |
-| **Python** | 3.10 o superior (usa anotaciones de tipo modernas: `list[str]`, `dict[str, str]`) |
+| **Python** | 3.14 o superior (usa anotaciones de tipo modernas: `list[str]`, `dict[str, str]`) |
 | **Permisos** | Se recomiendan privilegios de Administrador para operaciones WSL y winget. La aplicación soporta modo limitado (solo lectura) si el usuario rechaza la elevación. |
 
 ---
@@ -62,7 +62,7 @@ límites de recursos mediante `.wslconfig` y utilidades de mantenimiento.
 
 | Área | Tecnología |
 |------|------------|
-| Lenguaje | **Python 3.10+** |
+| Lenguaje | **Python 3.14+** |
 | Interfaz gráfica | **PySide6** (bindings oficiales de Qt 6 para widgets) |
 | Concurrencia UI | **QThread** + señales/slots de Qt |
 | Cliente HTTP | **requests** (descargas con streaming, reintentos y soporte Range) |
@@ -75,38 +75,33 @@ límites de recursos mediante `.wslconfig` y utilidades de mantenimiento.
 
 ## Inicio Rápido
 
-### Instalación con un solo comando (PowerShell)
+### Instalación y Ejecución con un solo comando (PowerShell)
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install_secure.ps1 | iex
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install.ps1 | iex
 ```
+
+### Ejecución Local Rápida (`Iniciar.bat`)
+
+Si ya has clonado el repositorio o descargado el archivo ZIP en una carpeta local, puedes instalar las dependencias e iniciar la aplicación simplemente haciendo doble clic en el archivo lanzador en la carpeta raíz:
+
+```cmd
+Iniciar.bat
+```
+
+> **Nota**: Este es un script híbrido Batch/PowerShell. Detectará automáticamente Python 3.14 o superior, creará el entorno virtual `.venv` si es necesario, instalará o actualizará los requisitos y lanzará la interfaz gráfica de forma inmediata sin comandos manuales.
 
 > **Qué hace este comando — paso a paso:**
 >
-> 1. **Descarga `install_secure.ps1`** — Un script de arranque ligero (~6 KB) que
->    se obtiene directamente desde la rama `master` del repositorio a través del
->    servicio de contenido raw de GitHub.
-> 2. **Descarga el repositorio como ZIP** — El script de arranque descarga todo el
->    código fuente de WSL Manager Pro como un archivo ZIP (no requiere Git), lo
->    extrae y copia los archivos a `%USERPROFILE%\Desktop\WSL-Manager-Pro`.
-> 3. **Verifica compatibilidad de Windows** — Se detiene antes de realizar
->    cambios en builds no soportadas y explica el requisito mínimo.
-> 4. **Verifica archivos críticos** — Comprueba que `install.ps1` y `distros.json`
->    estén presentes e intactos antes de continuar. Si algo falta, el script se
->    detiene con un mensaje de error claro.
-> 5. **Delega en `install.ps1`** — La copia local verificada del instalador
->    completo de entorno toma el control y ejecuta la configuración completa:
->    habilita características WSL de Windows, instala Python 3.12 mediante winget,
->    crea un entorno virtual `.venv` e instala todas las dependencias del proyecto.
-> 6. **Gestiona reinicios requeridos por WSL** — En instalaciones limpias de
->    Windows, omite de forma segura comandos WSL cuando el sistema requiere reinicio.
-> 7. **Listo para ejecutar** — Cuando el proceso termina, la aplicación está
->    completamente configurada y puede iniciarse con `.\.venv\Scripts\python.exe .\main.py`
->    desde el directorio de destino.
+> 1. **Descarga y ejecuta install.ps1** — Un script instalador de un solo comando que se obtiene directamente desde la rama master del repositorio a través del servicio de contenido raw de GitHub.
+> 2. **Descarga y desempaqueta el repositorio** — Si se ejecuta en un directorio limpio, descarga automáticamente todo el código fuente de WSL Manager Pro como un archivo ZIP (sin requerir Git), lo extrae y lo coloca en %USERPROFILE%\Desktop\WSL-Manager-Pro.
+> 3. **Verifica el entorno de Python** — Detecta una instalación compatible de Python (>=3.14). Si no se encuentra ninguna, instala automáticamente Python 3.14 usando winget y actualiza la ruta del sistema.
+> 4. **Prepara el entorno virtual** — Crea o recrea automáticamente un entorno virtual aislado .venv utilizando el intérprete local de Python.
+> 5. **Instala las dependencias del proyecto** — Actualiza pip e instala silenciosamente todos los paquetes requeridos definidos en 
+equirements.txt mostrando un indicador de progreso.
+> 6. **Inicia la aplicación** — Una vez verificadas las dependencias, el script inicia automáticamente WSL Manager Pro.
 >
-> **Requisitos:** Privilegios de Administrador (el script se auto-eleva mediante
-> aviso UAC) y `winget` debe estar disponible (incluido con App Installer en Windows 10/11).
-> **No se requiere Git.**
+> **Requisitos:** Windows 10/11. No se requiere instalación de Git. Las dependencias se configuran en el espacio de usuario, aunque la propia aplicación podría solicitar privilegios de administrador a través de la interfaz gráfica si se requiere habilitar características de WSL durante su uso.**
 
 ### Instalación Manual (alternativa clásica)
 

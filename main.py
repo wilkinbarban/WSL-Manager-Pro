@@ -86,12 +86,15 @@ def _relaunch_with_workspace_venv() -> bool:
     except OSError:
         pass
 
-    result = subprocess.run([
-        str(venv_python),
-        str(Path(__file__).resolve()),
-        *sys.argv[1:],
-    ])
-    raise SystemExit(result.returncode)
+    try:
+        result = subprocess.run([
+            str(venv_python),
+            str(Path(__file__).resolve()),
+            *sys.argv[1:],
+        ])
+        raise SystemExit(result.returncode)
+    except OSError:
+        return False
 
 
 def _resolve_app_icon_path() -> str:
@@ -188,13 +191,13 @@ def _detect_missing_runtime_dependencies() -> list[tuple[str, str]]:
     """
     missing: list[tuple[str, str]] = []
 
-    if sys.version_info < (3, 10):
+    if sys.version_info < (3, 14):
         install_python_cmd = (
-            "winget install -e --id Python.Python.3.12 "
+            "winget install -e --id Python.Python.3.14 "
             "--accept-source-agreements --accept-package-agreements"
         )
         missing.append((
-            "Python 3.10+ is required.",
+            "Python 3.14+ is required.",
             install_python_cmd,
         ))
 

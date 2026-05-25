@@ -596,12 +596,12 @@ class MainWindow(QMainWindow):
         if distro.is_running:
             btn = QPushButton(t("Stop"))
             btn.setObjectName("tableActionStop")
-            btn.setFixedSize(58, 22)
+            btn.setFixedSize(54, 18)
             btn.clicked.connect(lambda _, n=distro.name: self._do_terminate(n))
         else:
             btn = QPushButton(t("Start"))
             btn.setObjectName("tableActionStart")
-            btn.setFixedSize(58, 22)
+            btn.setFixedSize(54, 18)
             btn.setToolTip(t("Launch a command to wake the distro"))
             btn.clicked.connect(
                 lambda _, n=distro.name: self._wake_distro(n)

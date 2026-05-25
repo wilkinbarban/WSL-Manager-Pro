@@ -1,4 +1,4 @@
-﻿# WSL Manager Pro
+# WSL Manager Pro
 
 <div align="center">
   <img src="assets/icon.png" alt="WSL Manager Pro Logo" width="180" style="max-width: 36vw; border-radius: 20px; box-shadow: 0 10px 28px rgba(0,0,0,0.28);">
@@ -6,7 +6,7 @@
   <p align="center">
     <a href="https://github.com/wilkinbarban/WSL-Manager-Pro/actions/workflows/ci.yml"><img alt="CI Status" src="https://github.com/wilkinbarban/WSL-Manager-Pro/actions/workflows/ci.yml/badge.svg"></a>
     <a href="https://www.gnu.org/licenses/gpl-3.0"><img alt="License: GPL v3" src="https://img.shields.io/badge/License-GPLv3-blue.svg"></a>
-    <a href="https://www.python.org/downloads/"><img alt="Python 3.10+" src="https://img.shields.io/badge/Python-3.10+-blue.svg"></a>
+    <a href="https://www.python.org/downloads/"><img alt="Python 3.14+" src="https://img.shields.io/badge/Python-3.14+-blue.svg"></a>
     <a href="https://pypi.org/project/PySide6/"><img alt="GUI: PySide6" src="https://img.shields.io/badge/GUI-PySide6-green.svg"></a>
     <a href="https://www.microsoft.com/windows"><img alt="Platform: Windows 10/11" src="https://img.shields.io/badge/Platform-Windows%2010%2F11-lightgrey.svg"></a>
     <a href="https://github.com/wilkinbarban/WSL-Manager-Pro/releases"><img alt="Latest Release" src="https://img.shields.io/github/v/release/wilkinbarban/WSL-Manager-Pro"></a>
@@ -65,7 +65,7 @@ provisioning (user account, packages, `wsl.conf`), resource limits via
 | **Operating System** | Windows 10 build 19041+ (WSL 2 support) |
 | **WSL** | `wsl.exe` accessible at `%SystemRoot%\System32\wsl.exe` |
 | **PowerShell** | `pwsh.exe` (PS 7+) or `powershell.exe` (PS 5.1) on PATH |
-| **Python** | 3.10 or later (uses modern type annotations: `list[str]`, `dict[str, str]`) |
+| **Python** | 3.14 or later (uses modern type annotations: `list[str]`, `dict[str, str]`) |
 | **Permissions** | Administrator privileges are recommended for WSL operations and winget. The application supports limited (read-only) mode if the user declines elevation. |
 
 ---
@@ -74,7 +74,7 @@ provisioning (user account, packages, `wsl.conf`), resource limits via
 
 | Area | Technology |
 |------|------------|
-| Language | **Python 3.10+** |
+| Language | **Python 3.14+** |
 | GUI framework | **PySide6** (official Qt 6 bindings for widgets) |
 | UI concurrency | **QThread** + Qt signals/slots |
 | HTTP client | **requests** (streaming downloads with retry and Range support) |
@@ -87,37 +87,32 @@ provisioning (user account, packages, `wsl.conf`), resource limits via
 
 ## Quick Start
 
-### One-Click Installation (PowerShell)
+### One-Click Installation & Launch (PowerShell)
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install_secure.ps1 | iex
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force; irm https://raw.githubusercontent.com/wilkinbarban/WSL-Manager-Pro/master/install.ps1 | iex
 ```
+
+### Easy Local Execution (`Iniciar.bat`)
+
+If you have already cloned the repository or downloaded the ZIP file into a local folder, you can install the dependencies and boot the application simply by double-clicking the launcher file in the root folder:
+
+```cmd
+Iniciar.bat
+```
+
+> **Note**: This is a hybrid Batch/PowerShell script. It will automatically check for Python 3.14+, bootstrap the `.venv` virtual environment if needed, install or upgrade all requirements, and launch the GUI immediately without manual commands.
 
 > **What this command does — step by step:**
 >
-> 1. **Downloads `install_secure.ps1`** — A lightweight bootstrap script (~6 KB) that
->    is fetched directly from the repository's `master` branch via GitHub's raw
->    content delivery.
-> 2. **Downloads the repository as ZIP** — The bootstrap script downloads the entire
->    WSL Manager Pro source tree as a ZIP archive (no Git required), extracts it,
->    and copies the files to `%USERPROFILE%\Desktop\WSL-Manager-Pro`.
-> 3. **Verifies Windows compatibility** — Stops before making changes on
->    unsupported Windows builds and explains the minimum requirement.
-> 4. **Verifies critical files** — Checks that `install.ps1` and `distros.json`
->    are present and intact before proceeding. If anything is missing, the script
->    halts with a clear error message.
-> 5. **Delegates to `install.ps1`** — The verified local copy of the full
->    environment installer takes over and runs the complete setup pipeline:
->    enables WSL Windows features, installs Python 3.12 via winget,
->    creates a `.venv` virtual environment, and installs all project dependencies.
-> 6. **Handles WSL reboot requirements** — On fresh Windows installs, WSL
->    commands are skipped safely when Windows reports that a restart is required.
-> 7. **Ready to launch** — When the process completes, the application is fully
->    configured and can be started with `.\.venv\Scripts\python.exe .\main.py` from the target directory.
+> 1. **Downloads and Runs `install.ps1`** — A single-command installer script that is fetched directly from the repository's `master` branch via GitHub's raw content delivery.
+> 2. **Bootstraps the Repository** — If run in a clean directory, it automatically downloads the entire WSL Manager Pro source tree as a ZIP archive (no Git required), extracts it, and sets up the project in `%USERPROFILE%\Desktop\WSL-Manager-Pro`.
+> 3. **Verifies Python Environment** — Detects a compatible Python installation (>=3.14). If missing, it automatically installs Python 3.14 using `winget` and updates the path.
+> 4. **Prepares Virtual Environment** — Automatically creates or recreates an isolated `.venv` virtual environment using the local Python installation.
+> 5. **Installs Project Dependencies** — Upgrades `pip` and installs all package requirements from `requirements.txt` quietly with an interactive progress spinner.
+> 6. **Launches the Application** — Once dependencies are fully verified, the script automatically boots WSL Manager Pro.
 >
-> **Requirements:** Administrator privileges (the script will auto-elevate via
-> UAC prompt) and `winget` must be available (bundled with App Installer on Windows 10/11).
-> **No Git installation required.**
+> **Requirements:** Windows 10/11. No Git installation is required. Dependency setups are handled cleanly, though the application itself may prompt for Administrator privileges if WSL feature enablement is required during operation.
 
 ### Manual Installation (classic alternative)
 
