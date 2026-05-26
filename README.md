@@ -107,10 +107,11 @@ Iniciar.bat
 >
 > 1. **Downloads and Runs `install.ps1`** — A single-command installer script that is fetched directly from the repository's `master` branch via GitHub's raw content delivery.
 > 2. **Bootstraps the Repository** — If run in a clean directory, it automatically downloads the entire WSL Manager Pro source tree as a ZIP archive (no Git required), extracts it, and sets up the project in `%USERPROFILE%\Desktop\WSL-Manager-Pro`.
-> 3. **Verifies Python Environment** — Detects a compatible Python installation (>=3.14). If missing, it automatically installs Python 3.14 using `winget` and updates the path.
-> 4. **Prepares Virtual Environment** — Automatically creates or recreates an isolated `.venv` virtual environment using the local Python installation.
-> 5. **Installs Project Dependencies** — Upgrades `pip` and installs all package requirements from `requirements.txt` quietly with an interactive progress spinner.
-> 6. **Launches the Application** — Once dependencies are fully verified, the script automatically boots WSL Manager Pro.
+> 3. **Verifies WSL Environment** — Detects if WSL is installed on the host system. If missing, it checks compatibility (OS Build >= 19041 and hardware virtualization in BIOS) and prompts for automatic installation (triggering UAC elevation, enabling Virtual Machine Platform features, and coordinating system reboots).
+> 4. **Verifies Python Environment** — Detects a compatible Python installation (>=3.14). If missing, it automatically installs Python 3.14 using `winget` and updates the path.
+> 5. **Prepares Virtual Environment** — Automatically creates or recreates an isolated `.venv` virtual environment using the local Python installation.
+> 6. **Installs Project Dependencies** — Upgrades `pip` and installs all package requirements from `requirements.txt` quietly with an interactive progress spinner.
+> 7. **Launches the Application** — Once dependencies are fully verified, the script automatically boots WSL Manager Pro.
 >
 > **Requirements:** Windows 10/11. No Git installation is required. Dependency setups are handled cleanly, though the application itself may prompt for Administrator privileges if WSL feature enablement is required during operation.
 

@@ -291,7 +291,7 @@ def main() -> None:
     _set_windows_app_id()
     try:
         from PySide6.QtGui import QFont, QIcon
-        from PySide6.QtWidgets import QApplication, QMessageBox
+        from PySide6.QtWidgets import QApplication, QDialog, QMessageBox
     except ModuleNotFoundError as exc:
         if exc.name == "PySide6" and _relaunch_with_workspace_venv():
             return
@@ -304,16 +304,30 @@ def main() -> None:
 
     missing_deps = _detect_missing_runtime_dependencies()
     if missing_deps:
-        summary, commands = _format_dependency_error_message(missing_deps)
-        QMessageBox.critical(
-            None,
-            "Missing Dependencies",
-            f"{summary}\n\n{commands}",
-        )
-        print(summary)
-        print()
-        print(commands)
-        raise SystemExit(1)
+        # Check if WSL is missing
+        is_wsl_missing = any("WSL is not installed" in label for label, _ in missing_deps)
+
+        # If other dependencies are missing, show critical error and exit
+        other_missing = [d for d in missing_deps if "WSL is not installed" not in d[0]]
+        if other_missing:
+            summary, commands = _format_dependency_error_message(other_missing)
+            QMessageBox.critical(
+                None,
+                "Missing Dependencies",
+                f"{summary}\n\n{commands}",
+            )
+            print(summary)
+            print(commands)
+            raise SystemExit(1)
+
+        if is_wsl_missing:
+            from ui.wsl_install_dialog import WslInstallDialog
+            is_admin = _is_admin()
+            dialog = WslInstallDialog(is_admin=is_admin)
+            ret = dialog.exec()
+            if ret == 2:  # Requesting relaunch as Administrator
+                _elevate_windows()
+            raise SystemExit(0 if ret == QDialog.DialogCode.Accepted else 1)
 
     app_font = QFont(app.font())
     # Force a sensible default point size immediately to prevent

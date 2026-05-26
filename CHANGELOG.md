@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.2] — 2026-05-26
+
+### Added
+- **Automatic WSL Setup & Validation**: Automatically detects if WSL is missing at startup. If supported (Windows 10/11 Build 19041+ with CPU virtualization enabled in BIOS), prompts the user for consent, requests Administrator elevation, installs WSL (using `wsl --install --no-distribution`), and coordinates system reboots. Implemented in both the console launchers and the desktop application.
+- **One-Click Local Launcher (`Iniciar.bat`)**: Added a hybrid Batch/PowerShell local bootstrapping script to easily verify python status, auto-create/rebuild `.venv` if needed, upgrade `pip`/dependencies, and run the GUI without manual commands.
+
+### Changed
+- **Python 3.14+ Migration**: Upgraded the project dependency constraints across all configuration files (`pyproject.toml`, `main.py`, `install.ps1`, and CI workflows) to require Python `>= 3.14` (built and verified with Python 3.14.5).
+- **UI Design Adjustments**: Decreased the fixed sizes of the `Start` and `Stop` action buttons in the main distro table from `58x22` to `54x18` (with size `10px` in `dark.qss`) to improve padding and prevent cell/row layout overlaps.
+- **Unified Installer**: Replaced the original `install.ps1` with the layout and robust error-handling logic of the `youtube-downloader` template. Deprecated and deleted `install_secure.ps1`.
+- **Localization Updates**: Updated instructions across all English, Spanish, and Portuguese translation files and README documents to reflect the new launcher and version requirements.
+
+---
+
 ## [1.0.1] — 2026-05-12
 
 ### Added

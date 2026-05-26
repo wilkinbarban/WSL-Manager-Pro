@@ -257,6 +257,103 @@ if (-not $IsProjectRoot) {
     exit $LASTEXITCODE
 }
 
+# --- Step 0: Check WSL Environment ---
+Show-Step "Verificando entorno de Windows Subsystem for Linux (WSL)"
+
+$wslInstalled = $false
+$wslPath = Join-Path $env:SystemRoot "System32\wsl.exe"
+if (-not (Test-Path $wslPath)) {
+    $wslPath = Join-Path $env:SystemRoot "SysNative\wsl.exe"
+}
+if (Test-Path $wslPath) {
+    $wslInstalled = $true
+} else {
+    if (Get-Command "wsl.exe" -ErrorAction SilentlyContinue) {
+        $wslInstalled = $true
+    }
+}
+
+if (-not $wslInstalled) {
+    # Check compatibility
+    $build = [Environment]::OSVersion.Version.Build
+    if ($build -lt 19041) {
+        Show-Error "WSL no Soportado" "Su version de Windows (Build $build) es demasiado antigua." "WSL 2 requiere Windows 10 Build 19041 o superior. Por favor, actualice Windows."
+    }
+
+    $virtEnabled = $true
+    try {
+        $processors = Get-CimInstance -ClassName Win32_Processor -ErrorAction SilentlyContinue
+        if ($processors) {
+            foreach ($p in $processors) {
+                if ($p.VirtualizationFirmwareEnabled -eq $false) {
+                    $virtEnabled = $false
+                    break
+                }
+            }
+        }
+    } catch {}
+
+    if (-not $virtEnabled) {
+        Show-Error "Virtualizacion Desactivada" "La virtualizacion asistida por hardware (VT-x/AMD-V) esta desactivada en la BIOS." "Active la virtualizacion en la configuracion de firmware de su placa base (BIOS/UEFI) antes de continuar."
+    }
+
+    Write-Host "  [!] Windows Subsystem for Linux (WSL) no esta instalado en este sistema." -ForegroundColor Yellow
+    $choice = Read-Host "  ¿Desea instalar WSL de forma automatica ahora? (Requiere elevacion y reinicio) [S/N]"
+    if ($choice -match '^[sSyY]$') {
+        # Check if running as Admin
+        $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+        $principal = New-Object Security.Principal.WindowsPrincipal($identity)
+        $isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+        if (-not $isAdmin) {
+            Write-Host "  [INFO] Solicitando elevacion de privilegios de Administrador..." -ForegroundColor Cyan
+            $ScriptPath = $MyInvocation.MyCommand.Path
+            if ([string]::IsNullOrWhiteSpace($ScriptPath) -and -not [string]::IsNullOrWhiteSpace($PSCommandPath)) {
+                $ScriptPath = $PSCommandPath
+            }
+            if ([string]::IsNullOrWhiteSpace($ScriptPath)) {
+                Show-Error "Error de Elevacion" "No se pudo determinar la ruta del script para la elevacion." "Ejecute PowerShell como Administrador e intente nuevamente."
+            }
+            $argList = "-NoProfile -ExecutionPolicy Bypass -File `"$ScriptPath`""
+            try {
+                Start-Process powershell -ArgumentList $argList -Verb RunAs -Wait
+            } catch {
+                Show-Error "Acceso Denegado" "La solicitud de elevacion fue cancelada o rechazada." "Debe ejecutar el script como Administrador para poder instalar WSL."
+            }
+            # After returning from elevation check if WSL is now available
+            if (-not (Test-Path $wslPath) -and -not (Get-Command "wsl.exe" -ErrorAction SilentlyContinue)) {
+                Write-Host "  [INFO] La instalacion requiere reiniciar el sistema para completarse." -ForegroundColor Yellow
+                exit 0
+            }
+        } else {
+            # We are admin, execute wsl --install
+            Write-Host "  [INFO] Iniciando instalacion de WSL..." -ForegroundColor Cyan
+            # wsl.exe might not be present yet in path, run dism or wsl.exe --install
+            # WSL 2 is installed using `wsl --install --no-distribution` or calling powershell command
+            $installRes = Run-WithProgress "powershell.exe" "-NoProfile -Command `"wsl --install --no-distribution`"" "Instalando WSL y activando caracteristicas"
+            if ($installRes.Success) {
+                Write-Host ""
+                Write-Host "  [OK] WSL instalado con exito." -ForegroundColor Green
+                $reboot = Read-Host "  Es necesario reiniciar el sistema para completar la instalacion. ¿Desea reiniciar ahora? [S/N]"
+                if ($reboot -match '^[sSyY]$') {
+                    Write-Host "  [INFO] Reiniciando el sistema en 5 segundos..." -ForegroundColor Yellow
+                    Start-Sleep -Seconds 5
+                    Restart-Computer -Force
+                    exit 0
+                } else {
+                    Write-Host "  [WARNING] Por favor, reinicie su computadora manualmente antes de volver a ejecutar el programa." -ForegroundColor Yellow
+                    exit 0
+                }
+            } else {
+                $errText = if ($installRes.Stderr) { $installRes.Stderr } else { $installRes.Error }
+                Show-Error "Error de Instalacion" "No se pudo instalar WSL automaticamente. Codigo de salida: $($installRes.ExitCode)" "Detalle: $errText`nIntente ejecutar manualmente en una consola de Administrador: wsl --install --no-distribution"
+            }
+        }
+    } else {
+        Show-Error "WSL Requerido" "No se puede continuar sin WSL instalado en el sistema." "Instale WSL manualmente ejecutando 'wsl --install' y vuelva a intentarlo."
+    }
+}
+
 # --- Step 1: Detect Python Environment ---
 Show-Step "Verificando entorno de Python"
 

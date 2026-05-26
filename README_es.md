@@ -95,11 +95,11 @@ Iniciar.bat
 >
 > 1. **Descarga y ejecuta install.ps1** — Un script instalador de un solo comando que se obtiene directamente desde la rama master del repositorio a través del servicio de contenido raw de GitHub.
 > 2. **Descarga y desempaqueta el repositorio** — Si se ejecuta en un directorio limpio, descarga automáticamente todo el código fuente de WSL Manager Pro como un archivo ZIP (sin requerir Git), lo extrae y lo coloca en %USERPROFILE%\Desktop\WSL-Manager-Pro.
-> 3. **Verifica el entorno de Python** — Detecta una instalación compatible de Python (>=3.14). Si no se encuentra ninguna, instala automáticamente Python 3.14 usando winget y actualiza la ruta del sistema.
-> 4. **Prepara el entorno virtual** — Crea o recrea automáticamente un entorno virtual aislado .venv utilizando el intérprete local de Python.
-> 5. **Instala las dependencias del proyecto** — Actualiza pip e instala silenciosamente todos los paquetes requeridos definidos en 
-equirements.txt mostrando un indicador de progreso.
-> 6. **Inicia la aplicación** — Una vez verificadas las dependencias, el script inicia automáticamente WSL Manager Pro.
+> 3. **Verifica el entorno de WSL** — Detecta si WSL está instalado en el sistema. Si falta, comprueba la compatibilidad (OS Build >= 19041 y virtualización asistida por hardware en BIOS) y solicita la instalación automática (elevación UAC, activación de características del hipervisor y coordinación del reinicio).
+> 4. **Verifica el entorno de Python** — Detecta una instalación compatible de Python (>=3.14). Si no se encuentra ninguna, instala automáticamente Python 3.14 usando winget y actualiza la ruta del sistema.
+> 5. **Prepara el entorno virtual** — Crea o recrea automáticamente un entorno virtual aislado .venv utilizando el intérprete local de Python.
+> 6. **Instala las dependencias del proyecto** — Actualiza pip e instala silenciosamente todos los paquetes requeridos definidos en requirements.txt mostrando un indicador de progreso.
+> 7. **Inicia la aplicación** — Una vez verificadas las dependencias, el script inicia automáticamente WSL Manager Pro.
 >
 > **Requisitos:** Windows 10/11. No se requiere instalación de Git. Las dependencias se configuran en el espacio de usuario, aunque la propia aplicación podría solicitar privilegios de administrador a través de la interfaz gráfica si se requiere habilitar características de WSL durante su uso.**
 
